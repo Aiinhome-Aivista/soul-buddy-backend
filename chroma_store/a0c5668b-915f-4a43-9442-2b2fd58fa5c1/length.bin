@@ -1,0 +1,9 @@
+nce operations are performed.
+-- At time of creation, this table is only used to record vacuum operations.
+CREATE TABLE maintenance_log (
+  id INT PRIMARY KEY,
+  timestamp INT NOT NULL,
+  operation TEXT NOT NULL
+);
+0a0e7e93111a01789addf64961c6127cÅ9QÅaMsysdb00007-collection-config.sqlite.sql-- Stores collection configuration dictionaries.
+ALTER TABLE collections ADD COLUMN config_json_str TEX
