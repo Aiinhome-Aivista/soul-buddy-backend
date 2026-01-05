@@ -25,6 +25,9 @@ from controllers.submit_response import submit_response
 from controllers.wellbeing_profile import get_wellbeing_profile_controller
 from controllers.wellbeing_recovery_controller import get_recovery_plan_controller
 from controllers.voice_assistant_app import handle_voice_ask, serve_audio_file
+from controllers.fetch_disclaimer import fetch_disclaimer
+from controllers.terms_and_conditions import fetch_terms_and_conditions
+from controllers.faqs import fetch_grouped_faqs
 from database.config import BASE_URL, MYSQL_CONFIG, MAX_SAMPLE_VALUES, GRAPH_FOLDER, UPLOAD_FOLDER, TEMP_UPLOAD_FOLDER
 # --- Database & LLM Services ---
 from pyvis.network import Network
@@ -195,9 +198,19 @@ def voice_ask():
 def serve_audio(filename):
     return serve_audio_file(filename)
 
-# @app.route('/process_books', methods=['POST'])
-# def process_books_route():
-#     return process_books()
+@app.route('/disclaimer', methods=['GET'])
+def disclaimer():
+    return fetch_disclaimer()
+
+
+@app.route('/terms-and-conditions', methods=['GET'])
+def terms_and_conditions():
+    return fetch_terms_and_conditions()
+
+
+@app.route('/faqs', methods=['GET'])
+def faqs():
+    return fetch_grouped_faqs()
 
 
 
