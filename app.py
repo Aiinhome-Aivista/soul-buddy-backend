@@ -28,6 +28,7 @@ from controllers.voice_assistant_app import handle_voice_ask, serve_audio_file
 from controllers.fetch_disclaimer import fetch_disclaimer
 from controllers.terms_and_conditions import fetch_terms_and_conditions
 from controllers.faqs import fetch_grouped_faqs
+from controllers.user_profile import get_users_controller
 from database.config import BASE_URL, MYSQL_CONFIG, MAX_SAMPLE_VALUES, GRAPH_FOLDER, UPLOAD_FOLDER, TEMP_UPLOAD_FOLDER
 # --- Database & LLM Services ---
 from pyvis.network import Network
@@ -212,6 +213,10 @@ def terms_and_conditions():
 def faqs():
     return fetch_grouped_faqs()
 
+
+@app.route('/users', methods=['GET'])
+def fetch_users():
+    return get_users_controller()
 
 
 if __name__ == "__main__":
