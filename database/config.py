@@ -50,7 +50,7 @@ engine = create_engine(MYSQL_URI, pool_recycle=3600, pool_pre_ping=True)
 
 
 # ============ Base URL ============
-BASE_URL = os.getenv("BASE_URL", "http://122.163.121.176:3004")
+BASE_URL = os.getenv("BASE_URL", "http://72.61.226.68:3004")
 
 # ============ Misc Settings ============
 MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))
@@ -60,9 +60,9 @@ MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))
 # NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 # NEO4J_PASS = os.getenv("NEO4J_PASS", "Rnpyic2loh-N10dJKWZdnaloP3AJiYPjb7HI1eODTfs")
 
-ARANGO_HOST = os.getenv("ARANGO_HOST", "https://80e40c4be8ba.arangodb.cloud:8529")
+ARANGO_HOST = os.getenv("ARANGO_HOST", "https://eaffa1ddb656.arangodb.cloud:8529")
 ARANGO_USER = os.getenv("ARANGO_USER", "root")
-ARANGO_PASS = os.getenv("ARANGO_PASS", "XvdewfF3Q3RIvCabJomD")
+ARANGO_PASS = os.getenv("ARANGO_PASS", "t8aNkAzuMmoI0Ew8xx5i")
 ARANGO_DB = os.getenv("ARANGO_DB", "graph_ai")
 
 
@@ -91,3 +91,7 @@ MONGO_DATABASE_NAME = MONGO_DATABASE_DEFAULT
 # except Exception as e:
 #     print(f" Connection failed: {e}")
 
+# --- gmail Configuration ---
+GMAIL_USER = 'saikatofficial1998@gmail.com'
+GMAIL_APP_PASSWORD = 'gkzlglukauqwflnd' 
+RECEIVER_EMAIL = 'saikatofficial1998@gmail.com' 

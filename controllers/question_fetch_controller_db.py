@@ -36,7 +36,7 @@ def question_fetch_controller_db(get_connection_func):
             # Determine the options array based on question_type
             # ----------------------------------------------------------------------------------
             # FIX: Include 'Multiple Select' in the types that require option compilation
-            if q['question_type'] in ['Single Select', 'Agreement Scale', 'Multiple Select']:
+            if q['question_type'] in ['Single Select', 'Agreement Scale', 'Multiple Select','Single Select with Text']:
             # ----------------------------------------------------------------------------------
                 options = []
                 

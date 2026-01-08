@@ -133,7 +133,7 @@ def ask_mistral(prompt: str) -> str:
             data = resp.json()
             return data["choices"][0]["message"]["content"]
 
-        # 🔴 IMPORTANT: 400 ka exact message print karna
+        #  IMPORTANT: 400 ka exact message print karna
         print(f"[MISTRAL] HTTP {resp.status_code}: {resp.text}")
         return "{}"
 

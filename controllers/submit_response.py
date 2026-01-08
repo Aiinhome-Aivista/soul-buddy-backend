@@ -37,24 +37,29 @@ def submit_response(get_connection_func):
         for response in responses:
             question_id = response.get('question_id')
             answer_value = response.get('answer_value')
-            
+            answer_text = response.get('answer_text') 
+
             if question_id is None or answer_value is None:
                 conn.rollback()
                 return jsonify({"error": "Missing question_id or answer_value"}), 400
-            
-            # We only send 4 values now (user_id, question_id, answer_value, timestamp)
+
+            if question_id != 13:
+                answer_text = None
+
             response_records.append((
                 user_id,
                 question_id,
                 answer_value,
-                now 
+                answer_text,
+                now
             ))
+
             
         # 2. Updated Query: Removed response_id from columns and values
         query = """
-            INSERT INTO user_responses 
-            (user_id, question_id, answer_value, response_timestamp)
-            VALUES (%s, %s, %s, %s)
+                INSERT INTO user_responses 
+                (user_id, question_id, answer_value, answer_text, response_timestamp)
+                VALUES (%s, %s, %s, %s, %s)
         """
         
         cursor.executemany(query, response_records)

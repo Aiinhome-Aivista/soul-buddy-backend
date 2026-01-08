@@ -125,7 +125,7 @@
 
 #         # response = model.generate_content(prompt)
 #         # insights = clean_gemini_response(response.text)
-#         print(f"🔮 Using LLM mode: {ACTIVE_LLM}")
+#         print(f" Using LLM mode: {ACTIVE_LLM}")
 
 #         response_text = call_llm(prompt)
 #         insights = clean_gemini_response(response_text)
@@ -264,7 +264,7 @@ Data Sources:
 {tables_text}
 """
 
-        print(f"🔮 Using LLM mode: {ACTIVE_LLM}")
+        print(f" Using LLM mode: {ACTIVE_LLM}")
 
         response_text = call_llm(prompt)
         insights = clean_gemini_response(response_text)

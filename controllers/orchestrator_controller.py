@@ -354,7 +354,7 @@ def process_books():
     net.save_graph(html_path)
 
     # 8. Save Graph URL to MySQL
-    graph_url = f"http://122.163.121.176:3004/graphs/{html_filename}"
+    graph_url = f"http://72.61.226.68:3004/graphs/{html_filename}"
     
     try:
         conn_db = mysql.connector.connect(**MYSQL_CONFIG)

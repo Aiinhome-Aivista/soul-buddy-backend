@@ -1,0 +1,7 @@
+__pycache__/
+graphs/
+venv/
+uploads/
+database/
+lib/
+

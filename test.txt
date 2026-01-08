@@ -1,0 +1,65 @@
+Certainly! Below is another **sample mock test** on the chapter of **Fundamental Rights** (Indian Constitution), containing **5 short answer questions** with answers worth **2 marks each**.
+
+---
+
+### **Mock Test: Fundamental Rights (Indian Constitution)**
+
+#### **Instructions:**
+- Answer all questions.
+- Each question carries **2 marks**.
+- Keep your answers concise and to the point.
+
+---
+
+### **Questions:**
+
+1. **What is the meaning of "Equality before Law" under Article 14 of the Indian Constitution?**
+   *(2 marks)*
+
+2. **Explain the difference between "Fundamental Rights" and "Legal Rights."**
+   *(2 marks)*
+
+3. **How does the Right to Freedom of Speech and Expression (Article 19) contribute to democracy?**
+   *(2 marks)*
+
+4. **What are the grounds on which the State can impose restrictions on the Right to Freedom (Article 19)?**
+   *(2 marks)*
+
+5. **Why is the Right to Education (Article 21A) considered a Fundamental Right in India?**
+   *(2 marks)*
+
+---
+
+### **Answer Key:**
+
+1. **"Equality before Law"** means that all individuals, regardless of their status, are subject to the same laws and legal procedures. No person can claim immunity from legal action under Article 14.
+
+2. **Fundamental Rights** are basic human rights guaranteed by the Constitution and enforceable in courts, while **Legal Rights** are rights granted by legislation and can be modified or repealed by the government.
+
+3. The **Right to Freedom of Speech and Expression** allows citizens to express opinions, criticize the government, and participate in public discourse, which is essential for a functioning democracy.
+
+4. The State can impose **reasonable restrictions** on the Right to Freedom (Article 19) on grounds like **sovereignty, integrity, public order, morality, and defamation**.
+
+5. The **Right to Education (Article 21A)** was made a Fundamental Right in 2002 to ensure free and compulsory education for children aged 6-14, promoting literacy and social equality.
+
+---
+
+This mock test covers key aspects of Fundamental Rights in a structured manner.
+
+
+
+
+
+
+
+
+
+ Key Concepts in React: JSX, Components, Props, State, Lifecycle Methods, Hooks (useState, useEffect), Event Handling, Forms, API Integration.
+- Best Practices: Keep components small and reusable, avoid prop drilling, use context for shared state, keep component structure simple, optimize performance with memoization and code splitting.
+- TypeScript: Improves developer experience, catches errors before runtime, makes the code safer with types.
+- API: Use GraphQL for flexibility and single endpoint, use axios for making requests.
+- Error Handling: Use try/catch blocks to handle errors in API calls.
+- Loading States: Display appropriate loading states when fetching data from APIs.
+- UI Libraries: Material UI, Tailwind CSS, Chakra UI, Ant Design, ShadCN/UI offer prebuilt styled components and easy-to-use components for React projects.
+
+This appears to be a comprehensive guide for learning React, a popular JavaScript library for building user interfaces, particularly single-page applications. Here's a brief summary of the topics covered: 1. **Introduction**: Explanation of what React is and its importance. 2. **Setting Up the Environment**: Instructions on how to install Node.js, create a new project, and initialize it with Create React App. 3. **Basic Components**: Explanation of components (JSX), props, and state. 4. **Rendering Elements**: Discussion on rendering lists and fragments. 5. **Handling Events**: Learning how to handle user events like clicks or keyboard inputs. 6. **Form Handling**: Form creation and handling form data. 7. **State Management**: Deep dive into useState and useEffect hooks. 8. **Conditional Rendering and Looping**: If statements, ternary operators, and the map function. 9. **Lifecycle Methods**: ComponentDidMount, ComponentDidUpdate, ComponentWillUnmount. 10. **Fetching Data**: Fetching data from APIs using fetch API or libraries like axios. 11. **Error Handling**: Handling errors in API calls. 12. **Displaying Loading States**: Techniques for managing loading states. 13. **Optimization Techniques**: Code splitting, memoization, avoiding unnecessary renders, and reusable components. 14. **TypeScript**: Explanation of why TypeScript is useful and how to use it with React. 15. **Popular UI Libraries for React**: Mention of Material-UI, Tailwind CSS, Chakra UI, Ant Design, ShadCN/UI. 16. **Best Practices & Common Mistakes**: Tips on writing clean and efficient code, common beginner mistakes, and practice tasks for beginners. This guide seems like a great resource for anyone new to React or wanting to brush up on their skills. It provides clear explanations of key concepts with examples and practical exercises.

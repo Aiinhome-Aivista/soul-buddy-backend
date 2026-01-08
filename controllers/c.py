@@ -342,23 +342,23 @@ Evaluate the user's message and classify it as either:
 
 A message is UNSAFE if it involves or asks about ANY of the following:
 
-❌ Irrelevant / not allowed topics:
+ Irrelevant / not allowed topics:
 - weather, sports, movies, entertainment, cooking, travel, astrology, jokes
 - general knowledge not related to uploaded data
 
-❌ Harmful or dangerous:
+ Harmful or dangerous:
 - self-harm, suicide, harming others, violence, weapons
 - drug usage or creation, bomb instructions, illegal activities
 - hacking, cyber attacks, bypassing security, malware
 
-❌ Sensitive or restricted:
+ Sensitive or restricted:
 - sexual content, adult content, dating, relationships
 - extremist content, hate speech, racism, harassment
 - political persuasion or influencing voters
 - medical diagnosis or health advice
 - collecting personal data (PII), identity tracking
 
-❌ Ethical / safety risks:
+ Ethical / safety risks:
 - impersonation, faking documents, fraud
 - plagiarism, writing exam answers
 
