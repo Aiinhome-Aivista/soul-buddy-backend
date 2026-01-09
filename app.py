@@ -92,7 +92,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Global thread pool
 executor = ThreadPoolExecutor(max_workers=8)  # tune based on CPU cores
 
-
+@app.route("/")
+def index():
+    return "Hello from Flask!"
 # ---------------------------------- API Endpoints ---------------------------------
 
 # Insight
