@@ -290,6 +290,7 @@ def request_reset_route():
     return request_password_reset_controller(get_db_connection)
 
 # Step 2: Verify OTP & Change Password
+# Step 2: Verify OTP & Change Password
 @app.route('/forgot_password_reset', methods=['POST'])
 def reset_password_route():
     return reset_password_with_otp_controller(get_db_connection)
