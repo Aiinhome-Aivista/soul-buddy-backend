@@ -268,7 +268,7 @@
 #             for k, v in user_row.items():
 #                 profile_summary += f"{k}: {v}\n"
         
-#         survey_query = "SELECT q.question_text, ur.answer_value FROM user_responses ur JOIN ai_soulbuddy.questions q ON ur.question_id = q.question_id WHERE ur.user_id = %s"
+#         survey_query = "SELECT q.question_text, ur.answer_value FROM user_responses ur JOIN questions q ON ur.question_id = q.question_id WHERE ur.user_id = %s"
 #         cursor.execute(survey_query, (user_id,))
 #         survey_rows = cursor.fetchall()
 #         if survey_rows:
@@ -759,7 +759,7 @@ def get_user_profile(user_id):
             for k, v in user_row.items():
                 profile_summary += f"{k}: {v}\n"
         
-        survey_query = "SELECT q.question_text, ur.answer_value FROM user_responses ur JOIN ai_soulbuddy.questions q ON ur.question_id = q.question_id WHERE ur.user_id = %s"
+        survey_query = "SELECT q.question_text, ur.answer_value FROM user_responses ur JOIN questions q ON ur.question_id = q.question_id WHERE ur.user_id = %s"
         cursor.execute(survey_query, (user_id,))
         survey_rows = cursor.fetchall()
         if survey_rows:

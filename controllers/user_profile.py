@@ -5,7 +5,7 @@ from database.config import MYSQL_CONFIG
 
 def get_users_controller():
     """
-    Fetches the list of all users from the database (ai_soulbuddy.users).
+    Fetches the list of all users from the database (users).
     This allows the application to view user details like email, age, and emotional state.
     """
     try:
@@ -16,7 +16,7 @@ def get_users_controller():
         cursor = conn.cursor(dictionary=True)
 
         # SQL to select all users
-        sql = "SELECT * FROM ai_soulbuddy.users"
+        sql = "SELECT * FROM users"
         
         cursor.execute(sql)
         users = cursor.fetchall()

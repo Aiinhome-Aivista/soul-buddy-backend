@@ -48,6 +48,8 @@ from controllers.mail import handle_contact_controller
 from controllers.email_login_controller import email_login_controller
 from controllers.forgot_password_request_controller import request_password_reset_controller
 from controllers.forgot_password_verify_controller import reset_password_with_otp_controller
+from controllers.subscription_plan_controller import start_subscription_controller, subscription_status_controller
+from controllers.subscription_plans import get_subscription_plans
 load_dotenv()
 
 app = Flask(__name__)
@@ -92,9 +94,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Global thread pool
 executor = ThreadPoolExecutor(max_workers=8)  # tune based on CPU cores
 
-@app.route("/")
-def index():
-    return "Hello from Flask!"
+
 # ---------------------------------- API Endpoints ---------------------------------
 
 # Insight
@@ -292,10 +292,22 @@ def request_reset_route():
     return request_password_reset_controller(get_db_connection)
 
 # Step 2: Verify OTP & Change Password
-# Step 2: Verify OTP & Change Password
 @app.route('/forgot_password_reset', methods=['POST'])
 def reset_password_route():
     return reset_password_with_otp_controller(get_db_connection)
 
+#choose subscription plan
+@app.route("/start_subscription", methods=["POST"])
+def start_subscription_route():
+    return start_subscription_controller()
+#show subscription status
+@app.route("/subscription_status", methods=["GET"])
+def subscription_status_route():
+    return subscription_status_controller()
+
+#subscription plan    
+@app.route('/subscription_plan', methods=['GET'])
+def subscriptions():
+    return get_subscription_plans()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)
