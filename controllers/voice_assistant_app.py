@@ -33,6 +33,7 @@ def get_connection():
 
 # ===================== PLAN HELPERS =====================
 
+
 def get_plan_details(plan_name):
     conn = get_connection()
     cur = conn.cursor()
@@ -55,6 +56,22 @@ def get_plan_details(plan_name):
     return row
 
 # ===================== SUBSCRIPTION HELPERS =====================
+# def get_active_subscription(user_id):
+#     conn = get_connection()
+#     cur = conn.cursor()
+
+#     cur.execute("""
+#         SELECT plan_name, start_date, end_date
+#         FROM subscriptions
+#         WHERE user_id = %s
+#           AND status = 'active'
+#           AND NOW() BETWEEN start_date AND end_date
+#         LIMIT 1
+#     """, (user_id,))
+
+#     row = cur.fetchone()
+#     conn.close()
+#     return row
 
 def get_active_subscription(user_id):
     conn = get_connection()
@@ -107,56 +124,6 @@ def get_today_voice_window(user_id, daily_limit_seconds):
         "remaining_seconds": max(0, remaining)
     }
 
-def sanitize_for_voice(text: str) -> str:
-    if not text:
-        return ""
-
-    # -------- Layer 1: Unicode + hard cleanup --------
-    text = unicodedata.normalize("NFKD", text)
-
-    # Remove ALL parenthetical content (LLMs love meta)
-    text = re.sub(r"\([^)]*\)", "", text)
-
-    # Remove common LLM meta phrases
-    meta_phrases = [
-        r"optional follow[- ]?up.*",
-        r"follow[- ]?up.*",
-        r"optional question.*",
-        r"note\s*:.*",
-        r"instruction\s*:.*",
-        r"suggestion\s*:.*",
-        r"if needed\s*:.*",
-        r"for example\s*:.*",
-        r"example\s*:.*",
-        r"response\s*:.*",
-    ]
-
-    for p in meta_phrases:
-        text = re.sub(p, "", text, flags=re.IGNORECASE)
-
-    # -------- Layer 2: Remove markdown & symbols --------
-    text = re.sub(r"[*_`>#\-]", " ", text)
-
-    # Normalize whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    # -------- Layer 3: Conversational shaping --------
-    # Remove trailing colon-based prompts
-    text = re.sub(r":\s*$", "", text)
-
-    # Prevent assistant from narrating options
-    text = re.sub(
-        r"\b(here are|you can|options include|for you to consider)\b.*",
-        "",
-        text,
-        flags=re.IGNORECASE
-    )
-
-    # Limit length (Alexa-style brevity)
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    text = " ".join(sentences[:2])  # max 2 sentences
-
-    return text.strip()
 
 # ===================== UTIL =====================
 def extract_json_from_response(resp):
@@ -165,42 +132,12 @@ def extract_json_from_response(resp):
     return resp.get_json() if resp else {}
 
 
-# def clean_text_for_voice(text: str) -> str:
-#     if not text:
-#         return ""
-#     text = unicodedata.normalize("NFKD", text)
-#     text = re.sub(r"[*_`>#\-]", " ", text)
-#     text = re.sub(r"\s+", " ", text)
-#     return text.strip()
-
 def clean_text_for_voice(text: str) -> str:
     if not text:
         return ""
-
     text = unicodedata.normalize("NFKD", text)
-
-    # 🔥 REMOVE META / INSTRUCTIONAL PARENTHESES
-    text = re.sub(
-        r"\((?:optional|note|instruction|follow[- ]?up|if needed|example).*?\)",
-        "",
-        text,
-        flags=re.IGNORECASE
-    )
-
-    # 🔥 REMOVE GENERIC META PREFIXES
-    text = re.sub(
-        r"^(optional follow[- ]?up|follow[- ]?up|note|instruction)\s*:\s*",
-        "",
-        text,
-        flags=re.IGNORECASE
-    )
-
-    # Cleanup markdown & symbols
     text = re.sub(r"[*_`>#\-]", " ", text)
-
-    # Normalize spaces
     text = re.sub(r"\s+", " ", text)
-
     return text.strip()
 
 
@@ -330,7 +267,7 @@ def handle_voice_ask():
         print(f"RAG error: {e}")
         answer = ""
 
-    final_reply = sanitize_for_voice(answer)
+    final_reply = clean_text_for_voice(answer)
 
     # ---- Fallback ----
     if not final_reply:
@@ -341,8 +278,7 @@ User says: {user_input}
 
 Respond in 1–2 warm spoken sentences.
 """)
-
-        final_reply = sanitize_for_voice(fallback_text)
+        final_reply = clean_text_for_voice(fallback)
 
     audio = generate_voice(final_reply)
 
