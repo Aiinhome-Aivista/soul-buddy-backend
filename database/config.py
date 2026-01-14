@@ -32,23 +32,23 @@ UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
 TEMP_UPLOAD_FOLDER = os.getenv("TEMP_UPLOAD_FOLDER", "uploads")
 
 # ============ MySQL Configuration(lenovo server) ============
-# MYSQL_CONFIG = {
-#     "host": os.getenv("MYSQL_HOST", "116.193.134.6"),
-#     "port": int(os.getenv("MYSQL_PORT", "3306")),
-#     "user": os.getenv("MYSQL_USER", "lmysqluser"),
-#     "password": os.getenv("MYSQL_PASSWORD", "lenovo@429"),
-#     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
-#     "database": os.getenv("MYSQL_DATABASE", "ai_soulbuddy")
-# }
-# ============ MySQL Configuration(vps server) ============
 MYSQL_CONFIG = {
-    "host": os.getenv("MYSQL_HOST", "72.61.226.68"),
+    "host": os.getenv("MYSQL_HOST", "116.193.134.6"),
     "port": int(os.getenv("MYSQL_PORT", "3306")),
-    "user": os.getenv("MYSQL_USER", "aiinhome"),
-    "password": os.getenv("MYSQL_PASSWORD", "Aiin@2026"),
+    "user": os.getenv("MYSQL_USER", "lmysqluser"),
+    "password": os.getenv("MYSQL_PASSWORD", "lenovo@429"),
     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
-    "database": os.getenv("MYSQL_DATABASE", "Ai_souljunction")
+    "database": os.getenv("MYSQL_DATABASE", "ai_soulbuddy")
 }
+# ============ MySQL Configuration(vps server) ============
+# MYSQL_CONFIG = {
+#     "host": os.getenv("MYSQL_HOST", "72.61.226.68"),
+#     "port": int(os.getenv("MYSQL_PORT", "3306")),
+#     "user": os.getenv("MYSQL_USER", "aiinhome"),
+#     "password": os.getenv("MYSQL_PASSWORD", "Aiin@2026"),
+#     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
+#     "database": os.getenv("MYSQL_DATABASE", "Ai_souljunction")
+# }
 
 # --- SQLAlchemy Engine ---
 MYSQL_URI = (
