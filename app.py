@@ -314,19 +314,17 @@ def subscriptions():
 #admin, expert, superadmin login  
 @app.route("/admin_expert_login", methods=["POST"])
 def staff_login():
-    """Route for Super Admin, Admin, and Expert Login"""
     return staff_login_controller()
 
 #superadmin can ceate multiple admin and expert 
 @app.route("/admin_expert_registration", methods=["POST"])
 def create_staff():
-    """Route to register new staff members"""
+    return create_staff_account_controller()
 
 # NEW: Route to get list of admins/experts
 @app.route("/admin_expert_list", methods=["GET"])
 def get_staff_list():
     return get_all_staff_controller()
 
-    return create_staff_account_controller()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)
