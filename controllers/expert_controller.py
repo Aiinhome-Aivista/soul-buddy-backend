@@ -133,3 +133,46 @@ def save_expert_insight_controller():
             "message": "Failed to save expert insight",
             "error": str(e)
         }), 500
+
+# def get_expert_insights(user_id, session_id=None, limit=2):
+#     if not user_id:
+#         return ""
+
+#     try:
+#         conn = mysql.connector.connect(**MYSQL_CONFIG)
+#         cursor = conn.cursor(dictionary=True)
+
+#         if session_id:
+#             cursor.execute("""
+#                 SELECT insight_text
+#                 FROM expert_insights
+#                 WHERE user_id = %s
+#                   AND (session_id = %s OR session_id IS NULL)
+#                 ORDER BY created_at DESC
+#                 LIMIT %s
+#             """, (user_id, session_id, limit))
+#         else:
+#             cursor.execute("""
+#                 SELECT insight_text
+#                 FROM expert_insights
+#                 WHERE user_id = %s
+#                 ORDER BY created_at DESC
+#                 LIMIT %s
+#             """, (user_id, limit))
+
+#         rows = cursor.fetchall()
+#         cursor.close()
+#         conn.close()
+
+#         if not rows:
+#             return ""
+
+#         insight_block = "=== EXPERT GUIDANCE (HIGH PRIORITY) ===\n"
+#         for r in rows:
+#             insight_block += f"- {r['insight_text']}\n"
+
+#         return insight_block
+
+#     except Exception as e:
+#         logging.error(f"Error fetching expert insights: {e}")
+#         return ""

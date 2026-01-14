@@ -305,24 +305,15 @@
 # def rag_chat_controller():
 #     data = request.get_json()
     
-#     # 🆕 Support multiple active sessions OR single session_id
-#     active_session_names = data.get("active_sessions", []) 
-#     session_id_single = data.get("session_id") # Legacy/Single view support
-    
 #     user_id = data.get("user_id")
 #     user_message = data.get("query", "").strip()
+    
+#     # Support multiple active sessions OR single session_id
+#     active_session_names = data.get("active_sessions", []) 
+#     session_id_single = data.get("session_id") 
 
-#     # 1. Safety Gate
-#     if not is_message_safe(user_message):
-#         return jsonify({"answer": "Sorry, I can't help with that topic."}), 200
-
-#     # 2. Fetch User Context
-#     user_profile_context = get_user_profile(user_id)
-#     user_history_context = get_long_term_history(user_id)
-#     full_user_context = f"{user_profile_context}\n{user_history_context}"
-
-#     # 3. Identify Target Sessions (Resolve Names to IDs)
-#     target_sessions = [] # List of dicts: {id, tables, relationships}
+#     # --- Step 1: Resolve Target Sessions from DB ---
+#     target_sessions = [] # List of dicts: {id, tables, relationships, name}
     
 #     conn = mysql.connector.connect(**MYSQL_CONFIG)
 #     cursor = conn.cursor(dictionary=True)
@@ -355,22 +346,76 @@
 #     conn.close()
 
 #     if not target_sessions:
-#         return jsonify({"error": "No valid active sessions found."}), 404
+#         return jsonify({"error": "No valid active sessions found. Please select a session."}), 404
 
-#     # 4. Aggregate Metadata for Context
+#     # --- Step 2: Handle Empty Query (Generate Insights) ---
+#     if not user_message:
+#         # Logic to generate insights from multiple sessions
+#         schema_context = ""
+#         rel_context = ""
+#         total_sample_tables = 0
+        
+#         for session in target_sessions:
+#             schema_context += f"\n--- Session: {session['name']} ---\n"
+#             for t in session['tables']:
+#                 if total_sample_tables < 6: # Limit samples to keep prompt light
+#                     try:
+#                         df = pd.read_sql(f"SELECT * FROM `{t}` LIMIT 3", engine)
+#                         schema_context += f"Table {t} (Sample Data):\n{df.to_markdown(index=False)}\n"
+#                         total_sample_tables += 1
+#                     except:
+#                         schema_context += f"Table {t} (Schema Only)\n"
+#                 else:
+#                     schema_context += f"Table {t}\n"
+            
+#             for r in session['relationships']:
+#                 rel_context += f"{r['table1']}.{r['column1']} ≈ {r['table2']}.{r['column2']} (Similarity: {r.get('similarity',0)})\n"
+
+#         prompt = f"""
+#         You are 'SoulBuddy', a helpful data assistant.
+#         The user has selected the following Active Sessions: {', '.join([s['name'] for s in target_sessions])} but hasn't asked a specific question yet.
+
+#         DATA OVERVIEW:
+#         {schema_context}
+
+#         RELATIONSHIPS:
+#         {rel_context}
+
+#         Please generate 3 interesting insights or summary points based on this data to get the conversation started.
+#         Be concise and welcoming.
+#         """
+        
+#         insights = call_llm_unified(prompt)
+#         return jsonify({
+#             "answer": insights,
+#             "source": "auto_generated_insights",
+#             "context_used": []
+#         })
+
+#     # --- Step 3: Handle Normal Chat (If Query Exists) ---
+    
+#     # Safety Gate
+#     if not is_message_safe(user_message):
+#         return jsonify({"answer": "Sorry, I can't help with that topic."}), 200
+
+#     # Fetch User Context
+#     user_profile_context = get_user_profile(user_id)
+#     user_history_context = get_long_term_history(user_id)
+#     full_user_context = f"{user_profile_context}\n{user_history_context}"
+
+#     # Aggregate Metadata
 #     all_tables = []
 #     all_relationships = []
 #     for s in target_sessions:
 #         all_tables.extend(s["tables"])
 #         all_relationships.extend(s["relationships"])
 
-#     # 5. Multi-Session Vector Search
+#     # Multi-Session Vector Search
 #     query_emb = embedding_model.encode(user_message).tolist()
 #     aggregated_docs = []
     
 #     for session in target_sessions:
 #         try:
-#             # Query each session's collection
 #             collection_name = f"session_{session['id']}"
 #             collection = chroma_client.get_collection(name=collection_name)
 #             results = collection.query(query_embeddings=[query_emb], n_results=3)
@@ -384,10 +429,9 @@
 #                         "source_session": session["name"]
 #                     })
 #         except Exception:
-#             # Collection might not exist for this session, skip
 #             continue
 
-#     # Sort aggregated results by distance (lower is better) and take Top 5
+#     # Sort aggregated results
 #     aggregated_docs.sort(key=lambda x: x["distance"])
 #     top_docs = aggregated_docs[:5]
     
@@ -399,16 +443,14 @@
 #         is_relevant = True
 #         context_text = "\n".join([f"[Source: {d['source_session']}] {d['text']}" for d in top_docs])
     
-#     # 6. LLM Execution
+#     # LLM Execution
 #     final_answer = ""
 #     context_used = [d['text'] for d in top_docs]
 
 #     if is_relevant:
 #         # --- PATH A: Answer from Dataset ---
-        
-#         # Prepare Schema (lightweight)
 #         schema_context = ""
-#         for t in all_tables[:10]: # Limit to avoid context overflow
+#         for t in all_tables[:10]: 
 #             try:
 #                 df = pd.read_sql(f"SELECT * FROM `{t}` LIMIT 0", engine)
 #                 schema_context += f"Table {t}: {', '.join(df.columns)}\n"
@@ -434,7 +476,7 @@
 
 # INSTRUCTIONS:
 # 1. Answer the question using the Dataset Context from the active sessions.
-# 2. If the question compares two sessions (e.g. "compare book A and B"), use the source tags in the context.
+# 2. If the question compares two sessions, use the source tags.
 # 3. If specific data rows are needed, generate a JSON block: {{"tool": "run_sql_query", "query": "SELECT ..."}}
 # 4. Personalize the answer based on the User Profile.
 
@@ -488,6 +530,8 @@
 #         "source": source_tag,
 #         "context_used": context_used
 #     })
+
+
 
 import re
 import io
@@ -792,9 +836,27 @@ def get_long_term_history(user_id, limit=5):
         logging.error(f"Error fetching history: {e}")
         return ""
 
-# ------------------------ RAG Chat Controller (UPDATED) ------------------------
+# ================= HELPER: Clean Text for Voice =================
+def clean_text_for_voice(text: str) -> str:
+    """Strips Markdown and visual artifacts for natural speech."""
+    if not text: return ""
+    # Remove bold/italic markers (* or _)
+    text = re.sub(r"[\*_]{1,2}", "", text)
+    # Remove code blocks
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    # Remove headers (###)
+    text = re.sub(r"#+\s", "", text)
+    # Remove links [text](url) -> text
+    text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+    # Normalize whitespace
+    return " ".join(text.split())
+
+# ================= UPDATED CONTROLLER =================
 def rag_chat_controller():
     data = request.get_json()
+    
+    # [NEW] Check for voice flag
+    is_voice = data.get("is_voice", False)
     
     user_id = data.get("user_id")
     user_message = data.get("query", "").strip()
@@ -877,6 +939,11 @@ def rag_chat_controller():
         """
         
         insights = call_llm_unified(prompt)
+        
+        # [NEW] Clean insights if voice mode is requested on empty query (rare but possible)
+        if is_voice:
+            insights = clean_text_for_voice(insights)
+
         return jsonify({
             "answer": insights,
             "source": "auto_generated_insights",
@@ -938,6 +1005,22 @@ def rag_chat_controller():
     final_answer = ""
     context_used = [d['text'] for d in top_docs]
 
+    # [NEW] DEFINE VOICE VS TEXT PERSONAS
+    if is_voice:
+        persona_instructions = """
+        You are "SoulBuddy", a warm, spoken voice assistant (like Alexa).
+        1. Answer in 1-2 short, conversational sentences.
+        2. DO NOT read lists, IDs, or table rows. Summarize them.
+        3. No Markdown (no bold, no headers).
+        4. Be supportive and brief.
+        """
+    else:
+        persona_instructions = """
+        You are "SoulBuddy", a helpful data assistant.
+        1. Provide detailed, structured answers.
+        2. Use Markdown lists or tables where helpful.
+        """
+
     if is_relevant:
         # --- PATH A: Answer from Dataset ---
         schema_context = ""
@@ -950,7 +1033,7 @@ def rag_chat_controller():
         rel_context = "\n".join([f"{r['table1']}.{r['column1']} ≈ {r['table2']}.{r['column2']}" for r in all_relationships])
 
         llm_prompt = f"""
-You are "SoulBuddy", an intelligent AI assistant.
+{persona_instructions}
 
 {full_user_context}
 
@@ -984,7 +1067,24 @@ Respond with the answer or the JSON block.
                     final_answer = "I checked the data but found no matching records."
                 else:
                     records = df.head(5).to_dict(orient="records")
-                    enhance_prompt = f"User Question: {user_message}\nSQL Results: {records}\nUser Profile: {user_profile_context}\nSummarize these results naturally."
+                    
+                    # [NEW] Voice-aware summarization of SQL results
+                    if is_voice:
+                        enhance_prompt = f"""
+                        User asked: {user_message}
+                        SQL Results: {records}
+                        User Profile: {user_profile_context}
+                        
+                        Summarize these findings in ONE warm, spoken sentence.
+                        """
+                    else:
+                        enhance_prompt = f"""
+                        User Question: {user_message}
+                        SQL Results: {records}
+                        User Profile: {user_profile_context}
+                        Summarize these results naturally.
+                        """
+                    
                     final_answer = call_llm_unified(enhance_prompt)
             except Exception as e:
                 final_answer = f"Error querying data: {str(e)}"
@@ -996,7 +1096,7 @@ Respond with the answer or the JSON block.
     else:
         # --- PATH B: General Knowledge ---
         mistral_prompt = f"""
-You are "SoulBuddy".
+{persona_instructions}
 {full_user_context}
 The user asked: "{user_message}"
 We checked the active sessions ({', '.join([s['name'] for s in target_sessions])}) but found NO relevant info.
@@ -1004,6 +1104,10 @@ Answer using general knowledge. STRICTLY personalize based on the User Profile.
 """
         final_answer = call_llm_unified(mistral_prompt).strip()
         source_tag = "mistral_general"
+
+    # [NEW] Final Polish for Voice
+    if is_voice:
+        final_answer = clean_text_for_voice(final_answer)
 
     # Log to History
     if user_id:
@@ -1019,5 +1123,6 @@ Answer using general knowledge. STRICTLY personalize based on the User Profile.
     return jsonify({
         "answer": final_answer,
         "source": source_tag,
-        "context_used": context_used
+        "context_used": context_used,
+        "is_voice": is_voice
     })

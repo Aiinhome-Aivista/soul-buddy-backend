@@ -50,6 +50,7 @@ from controllers.forgot_password_request_controller import request_password_rese
 from controllers.forgot_password_verify_controller import reset_password_with_otp_controller
 from controllers.subscription_plan_controller import start_subscription_controller, subscription_status_controller
 from controllers.subscription_plans import get_subscription_plans
+from controllers.admin_login import staff_login_controller, create_staff_account_controller,get_all_staff_controller
 load_dotenv()
 
 app = Flask(__name__)
@@ -309,5 +310,23 @@ def subscription_status_route():
 @app.route('/subscription_plan', methods=['GET'])
 def subscriptions():
     return get_subscription_plans()
+
+#admin, expert, superadmin login  
+@app.route("/admin_expert_login", methods=["POST"])
+def staff_login():
+    """Route for Super Admin, Admin, and Expert Login"""
+    return staff_login_controller()
+
+#superadmin can ceate multiple admin and expert 
+@app.route("/admin_expert_registration", methods=["POST"])
+def create_staff():
+    """Route to register new staff members"""
+
+# NEW: Route to get list of admins/experts
+@app.route("/admin_expert_list", methods=["GET"])
+def get_staff_list():
+    return get_all_staff_controller()
+
+    return create_staff_account_controller()
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)

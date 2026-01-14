@@ -31,7 +31,7 @@ GRAPH_FOLDER = os.getenv("GRAPH_FOLDER", "graphs")
 UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
 TEMP_UPLOAD_FOLDER = os.getenv("TEMP_UPLOAD_FOLDER", "uploads")
 
-# ============ MySQL Configuration ============
+# ============ MySQL Configuration(lenovo server) ============
 MYSQL_CONFIG = {
     "host": os.getenv("MYSQL_HOST", "116.193.134.6"),
     "port": int(os.getenv("MYSQL_PORT", "3306")),
@@ -40,6 +40,16 @@ MYSQL_CONFIG = {
     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
     "database": os.getenv("MYSQL_DATABASE", "ai_soulbuddy")
 }
+# ============ MySQL Configuration(vps server) ============
+# MYSQL_CONFIG = {
+#     "host": os.getenv("MYSQL_HOST", "72.61.226.68"),
+#     "port": int(os.getenv("MYSQL_PORT", "3306")),
+#     "user": os.getenv("MYSQL_USER", "aiinhome"),
+#     "password": os.getenv("MYSQL_PASSWORD", "Aiin@2026"),
+#     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
+#     "database": os.getenv("MYSQL_DATABASE", "Ai_souljunction")
+# }
+
 # --- SQLAlchemy Engine ---
 MYSQL_URI = (
     f"mysql+pymysql://{MYSQL_CONFIG['user']}:{quote_plus(MYSQL_CONFIG['password'])}"
@@ -50,7 +60,7 @@ engine = create_engine(MYSQL_URI, pool_recycle=3600, pool_pre_ping=True)
 
 
 # ============ Base URL ============
-BASE_URL = os.getenv("BASE_URL", "https://aivista.co.in")
+BASE_URL = os.getenv("BASE_URL", "http://122.163.121.176:3004")
 
 # ============ Misc Settings ============
 MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))

@@ -1,8 +1,7 @@
 __pycache__/
 graphs/
-chroma_store/
-static/
 venv/
 uploads/
+database/
 lib/
 

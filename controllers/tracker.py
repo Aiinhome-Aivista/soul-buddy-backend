@@ -22,7 +22,7 @@ def get_tracker_data():
 
         query = """
         SELECT * 
-        FROM Tracker
+        FROM tracker
         ORDER BY SESSION_TIME DESC;
         """
         cursor.execute(query)
