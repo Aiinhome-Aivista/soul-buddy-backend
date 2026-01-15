@@ -337,11 +337,16 @@ Context:
 {json.dumps(context, indent=2)}
 
 Rules:
-- 1–2 short sentences
-- Mention the topic
+- ONE response only (no alternatives, no optional text)
+- 1–2 short sentences maximum
+- Mention the topic briefly
+- Warm, human, spoken tone
 - No questions
 - No advice
-- Spoken, warm tone
+- No quotation marks
+- No parentheses
+- No explanations
+- Output ONLY the greeting text
 """
 
     greeting = call_llm(prompt)
