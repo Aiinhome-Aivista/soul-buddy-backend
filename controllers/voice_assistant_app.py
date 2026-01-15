@@ -283,17 +283,21 @@ def build_first_time_greeting(user_id: str) -> str:
     prompt = f"""
 You are a calm, empathetic wellness voice assistant.
 
-Using the user information below, generate a short greeting
+Generate EXACTLY ONE short spoken greeting sentence
 for a FIRST-TIME conversation.
 
 Context:
 {json.dumps(context, indent=2)}
 
 Rules:
-- 2 short sentences max
+- ONE response only (no alternatives, no options)
+- 1–2 short sentences maximum
 - Warm, human, spoken tone
 - No advice
-- Do NOT mention AI or data
+- No explanations
+- No quotation marks
+- Do NOT mention AI, data, or preferences
+- Output ONLY the greeting text
 """
 
     greeting = call_llm(prompt)
