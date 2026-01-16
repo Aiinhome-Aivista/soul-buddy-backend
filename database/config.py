@@ -70,9 +70,9 @@ MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))
 # NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 # NEO4J_PASS = os.getenv("NEO4J_PASS", "Rnpyic2loh-N10dJKWZdnaloP3AJiYPjb7HI1eODTfs")
 
-ARANGO_HOST = os.getenv("ARANGO_HOST", "https://eaffa1ddb656.arangodb.cloud:8529")
+ARANGO_HOST = os.getenv("ARANGO_HOST", "https://6688a76a8317.arangodb.cloud:8529")
 ARANGO_USER = os.getenv("ARANGO_USER", "root")
-ARANGO_PASS = os.getenv("ARANGO_PASS", "t8aNkAzuMmoI0Ew8xx5i")
+ARANGO_PASS = os.getenv("ARANGO_PASS", "kmvfrDSIrWF8j5LvUKTE")
 ARANGO_DB = os.getenv("ARANGO_DB", "graph_ai")
 
 

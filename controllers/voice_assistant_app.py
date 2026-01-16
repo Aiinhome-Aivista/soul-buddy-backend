@@ -29,6 +29,52 @@ def get_connection():
         database=MYSQL_CONFIG["database"],
         cursorclass=pymysql.cursors.DictCursor
     )
+# ===================== SMALL WORD HELPERS =====================
+def fetch_last_topic(user_id: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT user_input, model_response
+        FROM conversation_history
+        WHERE user_id = %s
+          AND user_input NOT IN ('[LOGIN]', '[SESSION STARTED]')
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row
+
+def generate_supportive_ack(user_id: str) -> str:
+    last = fetch_last_topic(user_id)
+
+    context = {}
+    if last:
+        context = {
+            "last_user_message": last["user_input"],
+            "last_assistant_response": last["model_response"]
+        }
+
+    prompt = f"""
+You are a calm, empathetic wellness voice assistant.
+
+User gave a small acknowledgement (like hmm / okay).
+
+Conversation context:
+{json.dumps(context, indent=2)}
+
+Rules:
+- Respond with EXACTLY 1 or 2 short sentences
+- Supportive, warm tone
+- No questions
+- No advice
+- No repetition
+- Spoken, human language
+- Output ONLY the response
+"""
+
+    reply = call_llm(prompt)
+    return clean_text_for_voice(reply)
 
 
 # ===================== PLAN HELPERS =====================
@@ -116,13 +162,6 @@ def extract_json_from_response(resp):
     return resp.get_json() if resp else {}
 
 
-# def clean_text_for_voice(text: str) -> str:
-#     if not text:
-#         return ""
-#     text = unicodedata.normalize("NFKD", text)
-#     text = re.sub(r"[*_`>#\-]", " ", text)
-#     text = re.sub(r"\s+", " ", text)
-#     return text.strip()
 def clean_text_for_voice(text: str) -> str:
     if not text:
         return ""
@@ -158,6 +197,35 @@ def clean_text_for_voice(text: str) -> str:
     text = re.sub(r"\s+", " ", text)
 
     return text.strip()
+
+SMALL_ACK_WORDS = {
+    "hmm", "hm", "hmmm",
+    "ok", "okay", "okk",
+    "acha", "achaa", "accha",
+    "haan", "haanji", "hmm okay",
+    "yes","yeah"
+}
+
+def is_small_acknowledgement(text: str) -> bool:
+    if not text:
+        return False
+
+    normalized = text.lower().strip()
+
+    # exact match words
+    if normalized in SMALL_ACK_WORDS:
+        return True
+
+    # short filler phrases only
+    filler_patterns = [
+        r"^(hmm+)$",
+        r"^(ok+|okay+)$",
+        r"^(acha+|accha+)$",
+        r"^(haan+|haanji)$",
+        r"^(yes|yeah)$"
+    ]
+
+    return any(re.match(p, normalized) for p in filler_patterns)
 
 
 # ===================== SESSION =====================
@@ -366,6 +434,23 @@ def handle_voice_ask():
         return jsonify({"error": "user_id is required"}), 400
 
     session_id = get_or_create_session_id(user_id)
+    if user_input == "__NO_RESPONSE__":
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT full_name FROM users WHERE user_id=%s", (user_id,))
+        row = cur.fetchone()
+        conn.close()
+
+        name = row["full_name"].split()[0] if row and row.get("full_name") else "there"
+
+        msg = f"Hi {name}, are you still here?"
+        audio = generate_voice(msg)
+
+        return jsonify({
+            "session_id": session_id,
+            "text_response": msg,
+            "audio_url": f"{BASE_URL}/audio/{audio}"
+        })
 
     # ===================== SUBSCRIPTION CHECKS =====================
     # (We keep these to ensure they have valid access before greeting)
@@ -424,32 +509,38 @@ def handle_voice_ask():
             final_reply = build_returning_user_greeting(user_id)
             
     else:
-        # === RAG CHAT LOGIC ===
-        try:
-            with current_app.test_request_context(
-                "/rag_chat",
-                json={
-                    "session_id": session_id,
-                    "user_id": user_id,
-                    "query": user_input
-                }
-            ):
-                rag_resp = rag_chat_controller()
-                rag_json = extract_json_from_response(rag_resp)
-                answer = rag_json.get("answer", "")
-                final_reply = clean_text_for_voice(answer)
-        except Exception as e:
-            print(f"RAG error: {e}")
-            final_reply = ""
+        # === SMALL ACK HANDLING ===
+        if is_small_acknowledgement(user_input):
+            final_reply = generate_supportive_ack(user_id)
 
-        # === FALLBACK LLM (Only runs if RAG failed or returned empty) ===
-        if not final_reply:
-            fallback = call_llm(f"""
-            You are a calm, supportive wellness voice assistant.
-            User says: {user_input}
-            Respond in 1–2 warm spoken sentences.
-            """)
-            final_reply = clean_text_for_voice(fallback)
+        else:
+            # === RAG CHAT LOGIC ===
+            try:
+                with current_app.test_request_context(
+                    "/rag_chat",
+                    json={
+                        "session_id": session_id,
+                        "user_id": user_id,
+                        "query": user_input,
+                        "is_voice": True
+                    }
+                ):
+                    rag_resp = rag_chat_controller()
+                    rag_json = extract_json_from_response(rag_resp)
+                    answer = rag_json.get("answer", "")
+                    final_reply = clean_text_for_voice(answer)
+            except Exception as e:
+                print(f"RAG error: {e}")
+                final_reply = ""
+
+            if not final_reply:
+                fallback = call_llm(f"""
+                You are a calm, supportive wellness voice assistant.
+                User says: {user_input}
+                Respond in 1–2 warm spoken sentences.
+                """)
+                final_reply = clean_text_for_voice(fallback)
+
 
     # ===================== SAVE HISTORY =====================
     # We save history even for greetings so the next turn has context

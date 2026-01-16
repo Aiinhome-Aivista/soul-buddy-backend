@@ -48,7 +48,11 @@ from controllers.mail import handle_contact_controller
 from controllers.email_login_controller import email_login_controller
 from controllers.forgot_password_request_controller import request_password_reset_controller
 from controllers.forgot_password_verify_controller import reset_password_with_otp_controller
-from controllers.subscription_plan_controller import start_subscription_controller, subscription_status_controller
+from controllers.subscription_activation_controller import start_subscription_controller, subscription_status_controller
+from controllers.subscription_plan_controller import (
+    initiate_checkout,
+    confirm_payment
+)
 from controllers.subscription_plans import get_subscription_plans
 from controllers.admin_login import staff_login_controller, create_staff_account_controller,get_all_staff_controller
 load_dotenv()
@@ -306,6 +310,9 @@ def start_subscription_route():
 def subscription_status_route():
     return subscription_status_controller()
 
+app.route("/checkout_initiate", methods=["POST"])(initiate_checkout)
+app.route("/payment_confirm", methods=["POST"])(confirm_payment)
+
 #subscription plan    
 @app.route('/subscription_plan', methods=['GET'])
 def subscriptions():
@@ -314,10 +321,11 @@ def subscriptions():
 #admin, expert, superadmin login  
 @app.route("/admin_expert_login", methods=["POST"])
 def staff_login():
+    """Route for Super Admin, Admin, and Expert Login"""
     return staff_login_controller()
 
 #superadmin can ceate multiple admin and expert 
-@app.route("/admin_expert_registration", methods=["POST"])
+@app.route('/admin_expert_registration', methods=['POST'])
 def create_staff():
     return create_staff_account_controller()
 
