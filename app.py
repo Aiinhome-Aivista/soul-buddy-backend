@@ -31,7 +31,7 @@ from controllers.question_fetch_controller_db import question_fetch_controller_d
 from controllers.wellbeing_recovery_controller import get_recovery_plan_controller
 from controllers.visualization import send_from_directory, upload_and_process_arangodb
 from controllers.active_session_controller import update_active_sessions_controller
-from controllers.user_details_controller import get_user_details
+from controllers.user_details_controller import get_user_details, get_user_subscription_controller
 from controllers.expert_controller import (
     list_users_with_sessions_controller,
     get_session_conversation_controller,
@@ -48,7 +48,7 @@ from controllers.mail import handle_contact_controller
 from controllers.email_login_controller import email_login_controller
 from controllers.forgot_password_request_controller import request_password_reset_controller
 from controllers.forgot_password_verify_controller import reset_password_with_otp_controller
-from controllers.subscription_activation_controller import start_subscription_controller, subscription_status_controller
+from controllers.subscription_activation_controller import start_subscription_controller, subscription_status_controller, validate_coupon_controller
 from controllers.subscription_plan_controller import (
     initiate_checkout,
     confirm_payment
@@ -56,6 +56,8 @@ from controllers.subscription_plan_controller import (
 from controllers.subscription_plans import get_subscription_plans
 from controllers.admin_login import staff_login_controller, create_staff_account_controller,get_all_staff_controller
 load_dotenv()
+from controllers.otp_validate import send_otp_controller, verify_otp_controller
+from controllers.captcha_controller import generate_captcha_controller
 
 app = Flask(__name__)
 
@@ -107,7 +109,7 @@ executor = ThreadPoolExecutor(max_workers=8)  # tune based on CPU cores
 def insights():
     return insights_controller()
 
-# Tracker
+# tracker
 @app.route('/tracker', methods=['GET'])
 def get_tracker_data_():
     return get_tracker_data()
@@ -180,6 +182,7 @@ def signup_route():
 def subscribe_route():
     # Pass the helper function to the controller
     return subscription_controller(get_db_connection)
+    
  
 # --- NEW ROUTE: LOGIN ---
 
@@ -247,6 +250,9 @@ def update_active_sessions_route():
 def fetch_users():
     return get_users_controller()
 
+@app.route('/souljunction_users', methods=['GET'])
+def fetch_user_list():
+    return get_user_subscription_controller()
 # =======================
 # EXPERT / ADMIN ROUTES
 # =======================
@@ -333,6 +339,27 @@ def create_staff():
 @app.route("/admin_expert_list", methods=["GET"])
 def get_staff_list():
     return get_all_staff_controller()
+
+# --- otp ---
+
+@app.route('/send_otp', methods=['POST'])
+def send_otp():
+    """Route to request an OTP"""
+    return send_otp_controller()
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    """Route to validate the OTP"""
+    return verify_otp_controller()
+
+@app.route("/generate_captcha", methods=["GET"])
+def generate_captcha():
+    return generate_captcha_controller(get_db_connection)
+
+@app.route("/validate_coupon", methods=["POST"])
+def validate_coupon_route():
+    return validate_coupon_controller()
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)

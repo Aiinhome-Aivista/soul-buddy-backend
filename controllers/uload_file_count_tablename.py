@@ -16,14 +16,14 @@ def get_connection():
     return mysql.connector.connect(**MYSQL_CONFIG)
 
 def upsert_tracker(session_name, file_names):
-    """Upsert session_name and tables_name into Tracker table."""
+    """Upsert session_name and tables_name into tracker table."""
     try:
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Ensure Tracker table exists
+        # Ensure tracker table exists
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Tracker (
+            CREATE TABLE IF NOT EXISTS tracker (
                 session_name VARCHAR(255) PRIMARY KEY,
                 tables_name TEXT
             )
@@ -31,7 +31,7 @@ def upsert_tracker(session_name, file_names):
 
         # Upsert logic
         sql = """
-        INSERT INTO Tracker (session_name, tables_name)
+        INSERT INTO tracker (session_name, tables_name)
         VALUES (%s, %s)
         ON DUPLICATE KEY UPDATE tables_name = VALUES(tables_name)
         """
@@ -79,7 +79,7 @@ def upload_files_count_controller():
         # Join all file names with commas
         file_names_str = ", ".join(file_names)
 
-        # Upsert into Tracker table
+        # Upsert into tracker table
         upsert_tracker(session_name, file_names_str)
 
         return jsonify({

@@ -175,7 +175,7 @@
 #         user_id,
 #         plan["plan_name"],
 #         0,
-#         "INR",
+#         "USD",
 #         start_date,
 #         end_date
 #     ))
@@ -306,7 +306,7 @@ def initiate_checkout():
         "original_price": float(plan["original_price"]),
         "discount_percent": plan["discount_percent"],
         "final_amount": float(plan["offer_price"]),
-        "currency": "INR",
+        "currency": "USD",
         "validity_days": plan["validity_days"]
     })
 
@@ -364,7 +364,7 @@ def confirm_payment():
         plan["plan_code"],
         plan["plan_name"],
         plan["offer_price"],
-        "INR",
+        "USD",
         start_date,
         end_date,
         payment_method,
@@ -380,7 +380,7 @@ def confirm_payment():
         full_name=full_name,
         plan_name=plan["plan_name"],
         amount=plan["offer_price"],
-        currency="INR",
+        currency="USD",
         start_date=start_date.strftime("%d %b %Y"),
         end_date=end_date.strftime("%d %b %Y"),
         payment_method=payment_method,
@@ -393,7 +393,7 @@ def confirm_payment():
         "plan": plan["plan_name"],
         "payment_method": payment_method,
         "amount_paid": plan["offer_price"],
-        "currency": "INR",
+        "currency": "USD",
         "date": start_date.strftime("%d %b %Y, %I:%M %p"),
         "valid_till": end_date.strftime("%d %b %Y")
     }), 200

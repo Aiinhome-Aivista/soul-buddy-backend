@@ -13,7 +13,7 @@ def get_db_connection():
         database=MYSQL_CONFIG["database"]
     )
 
-# GET API to fetch Tracker data in DESC order
+# GET API to fetch tracker data in DESC order
 
 def get_tracker_data():
     try:

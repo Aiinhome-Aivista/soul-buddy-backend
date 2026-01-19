@@ -4,6 +4,8 @@ import pymysql
 import logging
 from flask import request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime as dt
+from helper.captcha_helper import verify_captcha
 
 # Import your database config
 from database.config import MYSQL_CONFIG
@@ -30,6 +32,9 @@ def staff_login_controller():
         data = request.get_json()
         email = data.get("email")
         password = data.get("password")
+        # CAPTCHA
+        captcha_id = data.get("captchaId")
+        captcha_value = data.get("captchaValue")
 
         # 1. Validation
         if not email or not password:
@@ -38,21 +43,53 @@ def staff_login_controller():
                 "message": "Email and password are required", 
                 "statusCode": 400
             }), 400
+        if not captcha_id or not captcha_value:
+            return jsonify({
+                "status": "failed",
+                "message": "Captcha is required",
+                "refreshCaptcha": True,
+                "statusCode": 400
+            }), 400
 
         # 2. Database Lookup
         conn = get_connection()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
+        #CAPTCHA VALIDATION
+        cursor.execute("""
+            SELECT captcha_hash
+            FROM captcha_store
+            WHERE id = %s AND expires_at > UTC_TIMESTAMP()
+        """, (captcha_id,))
+        captcha_row = cursor.fetchone()
+
+        if not captcha_row or not verify_captcha(captcha_value.strip().upper(), captcha_row["captcha_hash"]):
+            cursor.close()
+            conn.close()
+            return jsonify({
+                "status": "failed",
+                "message": "Invalid or expired captcha",
+                "refreshCaptcha": True,
+                "statusCode": 401
+            }), 401
+
+
+        # One-time captcha delete
+        cursor.execute("DELETE FROM captcha_store WHERE id = %s", (captcha_id,))
+        conn.commit()
+
         
         # Strictly query the 'staff_users' table
         cursor.execute("SELECT * FROM staff_users WHERE email = %s", (email,))
         staff_user = cursor.fetchone()
+        cursor.close()
         conn.close()
 
         # 3. Verify User Exists
         if not staff_user:
             return jsonify({
                 "status": "failed", 
-                "message": "Staff account not found", 
+                "message": "Staff account not found",
+                "refreshCaptcha": True, 
                 "statusCode": 404
             }), 404
 

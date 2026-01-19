@@ -73,7 +73,7 @@
 
 #     payment_method = payment.get("method", "FREE")
 #     amount = payment.get("amount", 0)
-#     currency = payment.get("currency", "INR")
+#     currency = payment.get("currency", "USD")
 
 #     if not user_id or not plan_name:
 #         return jsonify({"error": "user_id and plan_name required"}), 400
@@ -219,7 +219,8 @@ def get_plan_details(plan_name):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT plan_name,
+        SELECT plan_code,
+               plan_name,
                minutes_per_day,
                validity_days,
                is_trial,
@@ -251,7 +252,21 @@ def get_active_subscription(user_id):
     conn.close()
     return sub
 
+def get_latest_subscription(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
 
+    cur.execute("""
+        SELECT plan_name, start_date, end_date, status
+        FROM subscriptions
+        WHERE user_id = %s
+        ORDER BY start_date DESC
+        LIMIT 1
+    """, (user_id,))
+
+    sub = cur.fetchone()
+    conn.close()
+    return sub
 def get_active_subscription_with_plan(user_id):
     conn = get_connection()
     cur = conn.cursor()
@@ -261,7 +276,7 @@ def get_active_subscription_with_plan(user_id):
                p.plan_level
         FROM subscriptions s
         JOIN subscription_plans p
-          ON s.plan_name = p.plan_name
+          ON s.plan_code = p.plan_code
         WHERE s.user_id = %s
           AND s.status = 'active'
         ORDER BY s.start_date DESC
@@ -304,6 +319,44 @@ def get_today_voice_window(user_id, daily_limit_seconds):
     }
 
 
+# ======================= COUPON HELPERS ======================
+
+def get_coupon_details(code):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM coupons
+        WHERE code = %s
+          AND is_active = 1
+          AND NOW() BETWEEN valid_from AND valid_to
+    """, (code,))
+    coupon = cur.fetchone()
+    conn.close()
+    return coupon
+
+
+def apply_coupon_on_amount(amount, coupon):
+    """
+    Returns: (final_amount, discount_amount, error_message)
+    """
+    if amount < coupon["min_amount"]:
+        return None, None, f"Minimum amount should be {coupon['min_amount']}"
+
+    discount = 0
+
+    if coupon["discount_type"] == "PERCENT":
+        discount = (amount * coupon["discount_value"]) // 100
+        if coupon["max_discount"]:
+            discount = min(discount, coupon["max_discount"])
+
+    elif coupon["discount_type"] == "FLAT":
+        discount = coupon["discount_value"]
+
+    final_amount = max(0, amount - discount)
+    return final_amount, discount, None
+
+
 # ===================== START / UPGRADE =====================
 def start_subscription_controller():
     data = request.json or {}
@@ -317,8 +370,16 @@ def start_subscription_controller():
     payment = data.get("payment", {})
 
     payment_method = payment.get("method", "FREE")
-    amount = payment.get("amount", 0)
-    currency = payment.get("currency", "INR")
+    raw_amount = payment.get("amount", 0)
+    currency = payment.get("currency", "USD")
+
+    coupon_code = data.get("coupon_code")
+
+    # ---- Amount safety ----
+    try:
+        amount = int(raw_amount)
+    except (TypeError, ValueError):
+        amount = 0
 
     if not user_id or not plan_name:
         return jsonify({"error": "user_id and plan_name required"}), 400
@@ -334,9 +395,7 @@ def start_subscription_controller():
     current = get_active_subscription_with_plan(user_id)
     if current:
         if plan["plan_level"] <= current["plan_level"]:
-            return jsonify({
-                "error": "You can only upgrade to a higher plan"
-            }), 400
+            return jsonify({"error": "You can only upgrade to a higher plan"}), 400
 
         cur.execute("""
             UPDATE subscriptions
@@ -344,6 +403,28 @@ def start_subscription_controller():
                 end_date = NOW()
             WHERE subscription_id = %s
         """, (current["subscription_id"],))
+
+    # ---------- Apply Coupon ----------
+    discount_amount = 0
+    applied_coupon = None
+
+    if coupon_code:
+        coupon = get_coupon_details(coupon_code)
+        if not coupon:
+            return jsonify({"error": "Invalid or expired coupon"}), 400
+
+        final_amount, discount_amount, error = apply_coupon_on_amount(amount, coupon)
+        if error:
+            return jsonify({"error": error}), 400
+
+        amount = final_amount
+        applied_coupon = coupon_code
+
+        cur.execute("""
+            UPDATE coupons
+            SET used_count = used_count + 1
+            WHERE coupon_id = %s
+        """, (coupon["coupon_id"],))
 
     # ---------- Create subscription ----------
     start_date = datetime.now()
@@ -353,6 +434,7 @@ def start_subscription_controller():
     cur.execute("""
         INSERT INTO subscriptions
         (user_id,
+         plan_code,
          plan_name,
          amount,
          currency,
@@ -361,10 +443,13 @@ def start_subscription_controller():
          end_date,
          payment_method,
          transaction_id,
-         billing_address)
-        VALUES (%s,%s,%s,%s,'active',%s,%s,%s,%s,%s)
+         billing_address,
+         coupon_code,
+         discount_amount)
+        VALUES (%s,%s,%s,%s,%s,'active',%s,%s,%s,%s,%s,%s,%s)
     """, (
         user_id,
+        plan["plan_code"],      # 🔴 REQUIRED FIX
         plan_name,
         amount,
         currency,
@@ -372,7 +457,9 @@ def start_subscription_controller():
         end_date,
         payment_method,
         transaction_id,
-        json.dumps(billing)
+        json.dumps(billing),
+        applied_coupon,
+        discount_amount
     ))
 
     conn.commit()
@@ -392,15 +479,17 @@ def start_subscription_controller():
             transaction_id=transaction_id
         )
 
+    # ---------- UI RESPONSE ----------
     return jsonify({
         "status": "PAID" if amount > 0 else "FREE",
         "transaction_id": transaction_id,
-        "date": start_date.strftime("%d/%m/%Y, %I:%M %p"),
         "plan": plan_name,
+        "original_amount": int(raw_amount) if str(raw_amount).isdigit() else raw_amount,
+        "discount_amount": discount_amount,
+        "final_amount_paid": amount,
+        "coupon_applied": applied_coupon,
         "payment_method": payment_method,
-        "amount_paid": amount,
         "currency": currency,
-        "billing": billing,
         "valid_till": end_date.strftime("%d %b %Y")
     }), 201
 
@@ -411,8 +500,16 @@ def subscription_status_controller():
     if not user_id:
         return jsonify({"error": "user_id required"}), 400
 
-    sub = get_active_subscription(user_id)
+    sub = get_latest_subscription(user_id)
     if not sub:
+        return jsonify({
+            "active": False,
+            "voice_allowed": False
+        }), 200
+
+    # Check if subscription is currently valid
+    now = datetime.now()
+    if sub["status"] != "active" or not (sub["start_date"] <= now <= sub["end_date"]):
         return jsonify({
             "active": False,
             "voice_allowed": False
@@ -426,10 +523,10 @@ def subscription_status_controller():
         }), 200
 
     # ---- Validity ----
-    days_used = (datetime.now() - sub["start_date"]).days
+    days_used = (now - sub["start_date"]).days
     days_left = max(0, plan["validity_days"] - days_used)
 
-    # ---- Daily Voice Minutes (OLD LOGIC RESTORED) ----
+    # ---- Daily Voice Minutes ----
     if plan["minutes_per_day"] is None:
         return jsonify({
             "active": True,
@@ -455,4 +552,55 @@ def subscription_status_controller():
         "validity_days_left": days_left,
         "daily_minutes_left": remaining_seconds // 60,
         "voice_allowed": voice_allowed
+    }), 200
+
+
+def validate_coupon_controller():
+    data = request.json or {}
+
+    coupon_code = data.get("coupon_code")
+    raw_amount = data.get("amount")
+
+    # ---- Basic checks ----
+    if not coupon_code:
+        return jsonify({
+            "valid": False,
+            "message": "coupon_code is required"
+        }), 400
+
+    try:
+        amount = int(raw_amount)
+    except (TypeError, ValueError):
+        return jsonify({
+            "valid": False,
+            "message": "Invalid amount"
+        }), 400
+
+    # ---- Fetch coupon ----
+    coupon = get_coupon_details(coupon_code)
+    if not coupon:
+        return jsonify({
+            "valid": False,
+            "message": "Invalid or expired coupon"
+        }), 200
+
+    # ---- Apply coupon logic ----
+    final_amount, discount_amount, error = apply_coupon_on_amount(amount, coupon)
+
+    if error:
+        return jsonify({
+            "valid": False,
+            "message": error
+        }), 200
+
+    # ---- Success response ----
+    return jsonify({
+        "valid": True,
+        "coupon_code": coupon_code,
+        "discount_type": coupon["discount_type"],
+        "discount_value": coupon["discount_value"],
+        "discount_amount": discount_amount,
+        "original_amount": amount,
+        "final_amount": final_amount,
+        "message": "Coupon applied successfully"
     }), 200

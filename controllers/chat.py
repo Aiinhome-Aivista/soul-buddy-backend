@@ -550,6 +550,8 @@ from sqlalchemy import create_engine
 from model.llm_client import call_llm
 from database.config import ACTIVE_LLM, MYSQL_CONFIG
 from sentence_transformers import SentenceTransformer
+from sqlalchemy import Text
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -586,7 +588,18 @@ def detect_relationships(dfs):
 
 def store_df_mysql(df, table_name):
     safe_name = ''.join(c if c.isalnum() or c == '_' else '_' for c in table_name)
-    df.to_sql(safe_name, con=engine, if_exists='replace', index=False)
+
+    dtype_map = {}
+    if "document_text" in df.columns:
+        dtype_map["document_text"] = LONGTEXT()
+
+    df.to_sql(
+        safe_name,
+        con=engine,
+        if_exists='replace',
+        index=False,
+        dtype=dtype_map
+    )
     return safe_name
 
 def extract_json_block(text: str) -> dict | None:

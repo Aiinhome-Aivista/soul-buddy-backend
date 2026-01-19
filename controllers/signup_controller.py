@@ -79,6 +79,8 @@ import uuid
 import mysql.connector
 from flask import request, jsonify
 from werkzeug.security import generate_password_hash
+from datetime import datetime
+from helper.captcha_helper import verify_captcha
 
 def signup_controller(get_db_connection_func):
     data = request.json
@@ -93,10 +95,19 @@ def signup_controller(get_db_connection_func):
     health = data.get('health')
     emotional_state = data.get('emotional_state')
     relationship = data.get('relationship')
+    # CAPTCHA
+    captcha_id = data.get("captchaId")
+    captcha_value = data.get("captchaValue")
 
     # Required fields
     if not full_name or not email:
         return jsonify({"error": "Full name and email are required"}), 400
+     # CAPTCHA VALIDATION (INPUT)
+    if not captcha_id or not captcha_value:
+        return jsonify({
+            "error": "Captcha is required",
+            "refreshCaptcha": True
+        }), 400
 
     conn = get_db_connection_func()
     if not conn:
@@ -105,6 +116,27 @@ def signup_controller(get_db_connection_func):
     cursor = conn.cursor(dictionary=True)
 
     try:
+        # CAPTCHA VALIDATION (DB)
+        cursor.execute("""
+            SELECT captcha_hash, expires_at
+            FROM captcha_store
+            WHERE id = %s
+        """, (captcha_id,))
+        captcha_row = cursor.fetchone()
+
+        if (
+            not captcha_row or
+            captcha_row["expires_at"] < datetime.utcnow() or
+            not verify_captcha(captcha_value, captcha_row["captcha_hash"])
+        ):
+            return jsonify({
+                "error": "Invalid or expired captcha",
+                "refreshCaptcha": True
+            }), 401
+
+        # 🔥 One-time use captcha
+        cursor.execute("DELETE FROM captcha_store WHERE id = %s", (captcha_id,))
+
         # 🔎 1. Check if email already exists
         cursor.execute(
             "SELECT user_id FROM users WHERE email = %s",
@@ -114,8 +146,10 @@ def signup_controller(get_db_connection_func):
 
         if existing_user:
             return jsonify({
-                "error": "Email has already been registered. Please try with another email ID."
+                "error": "Email has already been registered. Please try with another email ID.",
+                "refreshCaptcha": True
             }), 409
+
 
         # 🔐 2. Hash password only if provided
         hashed_password = None

@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from neo4j import GraphDatabase, basic_auth
 from pymongo import MongoClient
 
+
 load_dotenv()
 
 # Local Ollama API (for mistral_local)
@@ -32,23 +33,22 @@ UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
 TEMP_UPLOAD_FOLDER = os.getenv("TEMP_UPLOAD_FOLDER", "uploads")
 
 # ============ MySQL Configuration(lenovo server) ============
-MYSQL_CONFIG = {
-    "host": os.getenv("MYSQL_HOST", "116.193.134.6"),
-    "port": int(os.getenv("MYSQL_PORT", "3306")),
-    "user": os.getenv("MYSQL_USER", "lmysqluser"),
-    "password": os.getenv("MYSQL_PASSWORD", "lenovo@429"),
-    # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
-    "database": os.getenv("MYSQL_DATABASE", "ai_soulbuddy")
-}
-# ============ MySQL Configuration(vps server) ============
 # MYSQL_CONFIG = {
-#     "host": os.getenv("MYSQL_HOST", "72.61.226.68"),
+#     "host": os.getenv("MYSQL_HOST", "116.193.134.6"),
 #     "port": int(os.getenv("MYSQL_PORT", "3306")),
-#     "user": os.getenv("MYSQL_USER", "aiinhome"),
-#     "password": os.getenv("MYSQL_PASSWORD", "Aiin@2026"),
+#     "user": os.getenv("MYSQL_USER", "lmysqluser"),
+#     "password": os.getenv("MYSQL_PASSWORD", "lenovo@429"),
 #     # "database": os.getenv("MYSQL_DATABASE", "NEW_DPT_V2")
-#     "database": os.getenv("MYSQL_DATABASE", "Ai_souljunction")
+#     "database": os.getenv("MYSQL_DATABASE", "ai_soulbuddy")
 # }
+# ============ MySQL Configuration(vps server) ============
+MYSQL_CONFIG = {
+    "host": os.getenv("MYSQL_HOST", "72.61.226.68"),
+    "port": int(os.getenv("MYSQL_PORT", "3306")),
+    "user": os.getenv("MYSQL_USER", "aiinhome"),
+    "password": os.getenv("MYSQL_PASSWORD", "Aiin@2026"),
+    "database": os.getenv("MYSQL_DATABASE", "souljunction")
+}
 
 # --- SQLAlchemy Engine ---
 MYSQL_URI = (
@@ -105,3 +105,12 @@ MONGO_DATABASE_NAME = MONGO_DATABASE_DEFAULT
 GMAIL_USER = 'saikatofficial1998@gmail.com'
 GMAIL_APP_PASSWORD = 'gkzlglukauqwflnd' 
 RECEIVER_EMAIL = 'saikatofficial1998@gmail.com' 
+
+
+# Account 1: Support
+SUPPORT_EMAIL = "support@souljunction.life"
+SUPPORT_PASSWORD = "Soul@2025" # The password you use to log in to webmail
+
+# Account 2: No-Reply
+NOREPLY_EMAIL = "noreply@souljunction.life"
+NOREPLY_PASSWORD = "Soul@2025"

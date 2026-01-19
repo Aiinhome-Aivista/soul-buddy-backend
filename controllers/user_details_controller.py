@@ -1,4 +1,5 @@
 import mysql.connector
+import pymysql
 from flask import jsonify, request
 from datetime import datetime
 from database.config import MYSQL_CONFIG
@@ -109,3 +110,72 @@ def get_user_details():
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+
+
+def get_connection():
+    return pymysql.connect(**MYSQL_CONFIG)
+
+# ================= SUBSCRIPTION DETAILS (PLAIN GET) =================
+def get_user_subscription_controller():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+        query = """
+            SELECT
+                u.user_id,
+                u.full_name,
+                s.plan_name,
+                DATE(s.start_date) AS start_date,
+                DATE(s.end_date) AS end_date,
+                GREATEST(DATEDIFF(s.end_date, CURDATE()), 0) AS remaining_days
+            FROM subscriptions s
+            JOIN users u ON u.user_id = s.user_id
+            WHERE s.status = 'active'
+            ORDER BY s.created_at DESC
+        """
+
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        if not rows:
+            return jsonify({
+                "status": "failed",
+                "message": "No active subscriptions found",
+                "count": 0,
+                "data": [],
+                "statusCode": 404
+            }), 404
+
+        subscriptions = []
+
+        for r in rows:
+            subscriptions.append({
+                "user_id": r["user_id"],
+                "full_name": r["full_name"],
+                "subscription": {
+                    "plan_name": r["plan_name"],
+                    "start_date": str(r["start_date"]),
+                    "end_date": str(r["end_date"]),
+                    "remaining_days": r["remaining_days"]
+                }
+            })
+
+        return jsonify({
+            "status": "success",
+            "statusCode": 200,
+            "count": len(subscriptions),
+            "data": subscriptions
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "failed",
+            "message": "Internal server error",
+            "error": str(e),
+            "statusCode": 500
+        }), 500
