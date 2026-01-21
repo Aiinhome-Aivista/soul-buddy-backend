@@ -58,7 +58,7 @@ from controllers.admin_login import staff_login_controller, create_staff_account
 load_dotenv()
 from controllers.otp_validate import send_otp_controller, verify_otp_controller
 from controllers.captcha_controller import generate_captcha_controller
-
+from controllers.seo_api import create_seo_entry, get_seo_data, update_seo_entry, delete_seo_entry
 app = Flask(__name__)
 
 CORS(app)
@@ -360,6 +360,34 @@ def generate_captcha():
 def validate_coupon_route():
     return validate_coupon_controller()
 
+
+#      SEO API ROUTES
+# ==========================
+
+# 1. Create
+@app.route('/seo', methods=['POST'])
+def create_seo_route():
+    return create_seo_entry()
+
+# 2. Read All
+@app.route('/seo', methods=['GET'])
+def get_all_seo_route():
+    return get_seo_data()
+
+# 3. Read One
+@app.route('/seo/<int:seo_id>', methods=['GET'])
+def get_seo_detail_route(seo_id):
+    return get_seo_data(seo_id)
+
+# 4. Update
+@app.route('/seo/<int:seo_id>', methods=['PUT'])
+def update_seo_detail_route(seo_id):
+    return update_seo_entry(seo_id)
+
+# 5. Delete
+@app.route('/seo/<int:seo_id>', methods=['DELETE'])
+def delete_seo_detail_route(seo_id):
+    return delete_seo_entry(seo_id)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)

@@ -102,9 +102,9 @@ MONGO_DATABASE_NAME = MONGO_DATABASE_DEFAULT
 #     print(f" Connection failed: {e}")
 
 # --- gmail Configuration ---
-GMAIL_USER = 'saikatofficial1998@gmail.com'
-GMAIL_APP_PASSWORD = 'gkzlglukauqwflnd' 
-RECEIVER_EMAIL = 'saikatofficial1998@gmail.com' 
+# GMAIL_USER = 'saikatofficial1998@gmail.com'
+# GMAIL_APP_PASSWORD = 'gkzlglukauqwflnd' 
+RECEIVER_EMAIL = 'support@souljunction.life' 
 
 
 # Account 1: Support
