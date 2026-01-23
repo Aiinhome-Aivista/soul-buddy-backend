@@ -48,7 +48,7 @@ from controllers.mail import handle_contact_controller
 from controllers.email_login_controller import email_login_controller
 from controllers.forgot_password_request_controller import request_password_reset_controller
 from controllers.forgot_password_verify_controller import reset_password_with_otp_controller
-from controllers.subscription_activation_controller import start_subscription_controller, subscription_status_controller, validate_coupon_controller
+from controllers.subscription_activation_controller import start_subscription_controller, subscription_status_controller, validate_coupon_controller, razorpay_verify_controller
 from controllers.subscription_plan_controller import (
     initiate_checkout,
     confirm_payment
@@ -59,6 +59,10 @@ load_dotenv()
 from controllers.otp_validate import send_otp_controller, verify_otp_controller
 from controllers.captcha_controller import generate_captcha_controller
 from controllers.seo_api import create_seo_entry, get_seo_data, update_seo_entry, delete_seo_entry
+from controllers.subscription_history import get_transaction_history
+from flask import send_from_directory
+
+
 app = Flask(__name__)
 
 CORS(app)
@@ -316,6 +320,15 @@ def start_subscription_route():
 def subscription_status_route():
     return subscription_status_controller()
 
+
+@app.route("/validate_coupon", methods=["POST"])
+def validate_coupon_route():
+    return validate_coupon_controller()
+
+@app.route("/payment_razorpay_verify", methods=["POST"])
+def razorpay_verify():
+    return razorpay_verify_controller()
+
 app.route("/checkout_initiate", methods=["POST"])(initiate_checkout)
 app.route("/payment_confirm", methods=["POST"])(confirm_payment)
 
@@ -356,11 +369,9 @@ def verify_otp():
 def generate_captcha():
     return generate_captcha_controller(get_db_connection)
 
-@app.route("/validate_coupon", methods=["POST"])
-def validate_coupon_route():
-    return validate_coupon_controller()
 
 
+# ==========================
 #      SEO API ROUTES
 # ==========================
 
@@ -388,6 +399,19 @@ def update_seo_detail_route(seo_id):
 @app.route('/seo/<int:seo_id>', methods=['DELETE'])
 def delete_seo_detail_route(seo_id):
     return delete_seo_entry(seo_id)
+
+
+@app.route("/static/invoices/<filename>")
+def serve_invoice(filename):
+    return send_from_directory("invoices", filename)
+
+@app.route("/logo")
+def logo():
+    return send_from_directory("logo", "sblogo3.png")
+
+@app.route("/transactions/<user_id>", methods=["GET"])
+def transactions(user_id):
+    return get_transaction_history(user_id)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)

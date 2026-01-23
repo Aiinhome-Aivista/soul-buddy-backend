@@ -354,7 +354,7 @@ def process_books():
     net.save_graph(html_path)
 
     # 8. Save Graph URL to MySQL
-    graph_url = f"https://aivista.co.in/souljuntion/graphs/{html_filename}"
+    graph_url = f"https://aivista.co.in/graphs/{html_filename}"
     
     try:
         conn_db = mysql.connector.connect(**MYSQL_CONFIG)

@@ -8,7 +8,7 @@ import asyncio
 from datetime import datetime, timedelta
 from flask import request, jsonify, send_from_directory, current_app
 import edge_tts
-
+import random
 from controllers.chat import rag_chat_controller
 from model.llm_client import call_llm
 from database.config import BASE_URL, MYSQL_CONFIG
@@ -29,6 +29,53 @@ def get_connection():
         database=MYSQL_CONFIG["database"],
         cursorclass=pymysql.cursors.DictCursor
     )
+
+# ===================== PEP_TALK_MESSAGES =====================
+PEP_TALK_MESSAGES = [
+    # Gentle check-ins
+    "Hey {name}, I’m right here with you.",
+    "I’m still here, {name}. Take your time.",
+    "Just checking in, {name}.",
+    "I’m here whenever you’re ready, {name}.",
+    "No rush at all, {name}. I’m here.",
+
+    # Reassuring presence
+    "You’re not alone right now, {name}.",
+    "I’m staying with you, {name}.",
+    "It’s okay to pause, {name}.",
+    "I’m right beside you, {name}.",
+    "You’re doing just fine, {name}.",
+
+    # Calm grounding
+    "Take a breath, {name}. I’m here.",
+    "This moment is okay, {name}.",
+    "You’re safe here, {name}.",
+    "We can go slow, {name}.",
+    "Nothing to fix right now, {name}.",
+
+    # Warm encouragement (no pressure)
+    "I’m listening whenever you want to continue, {name}.",
+    "I’m here for you, {name}.",
+    "It’s alright to take a moment, {name}.",
+    "You can take your time here, {name}.",
+    "I’ve got you, {name}.",
+
+    # Soft emotional support
+    "You don’t have to say anything yet, {name}.",
+    "This space is just for you, {name}.",
+    "I’m holding space for you, {name}.",
+    "You’re allowed to pause, {name}.",
+    "I’m still with you, {name}.",
+
+    # Simple human warmth
+    "Hey {name}, I’m here.",
+    "I’m right here, {name}.",
+    "Still here with you, {name}.",
+    "I haven’t gone anywhere, {name}.",
+    "Just here with you, {name}."
+]
+
+
 # ===================== SMALL WORD HELPERS =====================
 def fetch_last_topic(user_id: str):
     conn = get_connection()
@@ -443,7 +490,7 @@ def handle_voice_ask():
 
         name = row["full_name"].split()[0] if row and row.get("full_name") else "there"
 
-        msg = f"Hi {name}, are you still here?"
+        msg = random.choice(PEP_TALK_MESSAGES).format(name=name)
         audio = generate_voice(msg)
 
         return jsonify({

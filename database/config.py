@@ -60,7 +60,7 @@ engine = create_engine(MYSQL_URI, pool_recycle=3600, pool_pre_ping=True)
 
 
 # ============ Base URL ============
-BASE_URL = os.getenv("BASE_URL", "https://aivista.co.in/souljuntion")
+BASE_URL = os.getenv("BASE_URL", "https://aivista.co.in")
 
 # ============ Misc Settings ============
 MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))
@@ -102,15 +102,19 @@ MONGO_DATABASE_NAME = MONGO_DATABASE_DEFAULT
 #     print(f" Connection failed: {e}")
 
 # --- gmail Configuration ---
-# GMAIL_USER = 'saikatofficial1998@gmail.com'
+# GMAIL_USER = 'saikatofficial19980@gmail.com'
 # GMAIL_APP_PASSWORD = 'gkzlglukauqwflnd' 
-RECEIVER_EMAIL = 'support@souljunction.life' 
 
 
 # Account 1: Support
 SUPPORT_EMAIL = "support@souljunction.life"
 SUPPORT_PASSWORD = "Soul@2025" # The password you use to log in to webmail
 
+RECEIVER_EMAIL = 'support@souljunction.life' 
+ADMIN_EMAIL = "saikatofficial1998@gmail.com,syed.arshad@aiinhome.com,feroz.omar@aiinhome.com,sayan.mitra@aiinhome.com"
 # Account 2: No-Reply
 NOREPLY_EMAIL = "noreply@souljunction.life"
 NOREPLY_PASSWORD = "Soul@2025"
+# Rezorpay 
+RAZORPAY_KEY_ID = "rzp_test_S6VhNoblPS7Tl2"
+RAZORPAY_KEY_SECRET = "5b6HgM6MLZt92Ni6E8uDU1HG"
