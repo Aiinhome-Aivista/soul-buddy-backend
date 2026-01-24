@@ -60,7 +60,7 @@ engine = create_engine(MYSQL_URI, pool_recycle=3600, pool_pre_ping=True)
 
 
 # ============ Base URL ============
-BASE_URL = os.getenv("BASE_URL", "https://aivista.co.in")
+BASE_URL = os.getenv("BASE_URL", "https://aivista.co.in/souljuntion")
 
 # ============ Misc Settings ============
 MAX_SAMPLE_VALUES = int(os.getenv("MAX_SAMPLE_VALUES", "100"))
