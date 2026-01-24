@@ -12,7 +12,8 @@ def send_subscription_email(
     start_date,
     end_date,
     payment_method,
-    transaction_id
+    transaction_id,
+    attachment_path=None 
 ):
     try:
         # 1. Setup Email Headers
@@ -71,7 +72,7 @@ def send_subscription_email(
           <div class="container">
             
             <div class="header">
-              <h1>SOUL JUNCTION</h1>
+              <h1>SOULJUNCTION</h1>
             </div>
 
             <div class="content">
@@ -122,10 +123,15 @@ def send_subscription_email(
         msg.attach(MIMEText(html_body, "html"))
 
         # 4. Send using Namecheap (SSL Port 465)
-        with smtplib.SMTP_SSL("mail.souljunction.life", 465) as server:
+        with smtplib.SMTP_SSL("mail.souljunction.life", 465, timeout=20) as server:
             server.login(NOREPLY_EMAIL, NOREPLY_PASSWORD)
-            server.send_message(msg)
+            server.sendmail(
+                NOREPLY_EMAIL,
+                [to_email],  # ✅ explicit recipient
+                msg.as_string()
+            )
 
+        print("✅ User email sent to:", to_email)
         return True
 
     except Exception as e:

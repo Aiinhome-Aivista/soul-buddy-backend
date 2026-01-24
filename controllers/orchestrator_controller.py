@@ -7,7 +7,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from database.llm_service import LLMService
 from database.database_service import DatabaseService
-from database.config import MYSQL_CONFIG, GRAPH_FOLDER, UPLOAD_FOLDER
+from database.config import MYSQL_CONFIG, GRAPH_FOLDER, UPLOAD_FOLDER,BASE_URL
 from pyvis.network import Network
 
 # Initialize services
@@ -354,7 +354,7 @@ def process_books():
     net.save_graph(html_path)
 
     # 8. Save Graph URL to MySQL
-    graph_url = f"https://aivista.co.in/graphs/{html_filename}"
+    graph_url = f"{BASE_URL}/graphs/{html_filename}"
     
     try:
         conn_db = mysql.connector.connect(**MYSQL_CONFIG)

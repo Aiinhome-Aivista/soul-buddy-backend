@@ -1,65 +1,9 @@
-# from reportlab.lib.pagesizes import A4
-# from reportlab.pdfgen import canvas
-# from datetime import datetime
-# import os
-
-# def generate_invoice_pdf(invoice_data):
-#     os.makedirs("invoices", exist_ok=True)
-
-#     filename = f"invoices/{invoice_data['invoice_number']}.pdf"
-#     c = canvas.Canvas(filename, pagesize=A4)
-
-#     width, height = A4
-
-#     # Header
-#     c.setFont("Helvetica-Bold", 16)
-#     c.drawString(40, height - 50, "Soul Junction")
-#     c.setFont("Helvetica", 10)
-#     c.drawString(40, height - 70, "support@souljunction.com")
-
-#     # Invoice Meta
-#     c.drawString(400, height - 50, f"Invoice: {invoice_data['invoice_number']}")
-#     c.drawString(400, height - 65, f"Date: {invoice_data['date']}")
-
-#     # Billing Info
-#     c.setFont("Helvetica-Bold", 12)
-#     c.drawString(40, height - 120, "Billed To:")
-#     c.setFont("Helvetica", 10)
-#     y = height - 140
-
-#     for line in invoice_data["billing_lines"]:
-#         c.drawString(40, y, line)
-#         y -= 15
-
-#     # Table Header
-#     c.setFont("Helvetica-Bold", 10)
-#     c.drawString(40, y - 20, "Description")
-#     c.drawString(350, y - 20, "Amount")
-
-#     # Item
-#     c.setFont("Helvetica", 10)
-#     c.drawString(40, y - 40, invoice_data["plan_name"])
-#     c.drawString(350, y - 40, f"{invoice_data['currency']} {invoice_data['amount']}")
-
-#     # Total
-#     c.setFont("Helvetica-Bold", 12)
-#     c.drawString(40, y - 80, "Total Paid:")
-#     c.drawString(350, y - 80, f"{invoice_data['currency']} {invoice_data['amount']}")
-
-#     # Footer
-#     c.setFont("Helvetica", 9)
-#     c.drawString(40, 50, "Thank you for your purchase!")
-#     c.drawString(40, 35, "This is a system-generated invoice.")
-
-#     c.save()
-#     return filename
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
 from datetime import datetime
 import os
+
 
 def generate_invoice_pdf(invoice_data):
     os.makedirs("invoices", exist_ok=True)
@@ -80,7 +24,7 @@ def generate_invoice_pdf(invoice_data):
 
     c.setFillColorRGB(1, 1, 1)
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(40, height - 60, "SOUL JUNCTION")
+    c.drawString(40, height - 60, "SOULJUNCTION")
 
     c.setFont("Helvetica", 10)
     c.drawString(40, height - 85, "support@souljunction.com")
@@ -99,11 +43,20 @@ def generate_invoice_pdf(invoice_data):
     c.setFont("Helvetica-Bold", 11)
     c.drawString(40, y, "Billed To")
 
-    c.setFont("Helvetica", 10)
     y -= 18
-    for line in invoice_data["billing_lines"]:
-        c.drawString(40, y, line)
+
+    # 🔹 USER NAME
+    if invoice_data.get("full_name"):
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(40, y, invoice_data["full_name"])
         y -= 14
+
+    # 🔹 ADDRESS LINES
+    c.setFont("Helvetica", 10)
+    for line in invoice_data.get("billing_lines", []):
+        if line:
+            c.drawString(40, y, line)
+            y -= 14
 
     # ================= TABLE HEADER =================
     y -= 25
@@ -123,7 +76,7 @@ def generate_invoice_pdf(invoice_data):
     c.drawString(45, y + 9, invoice_data["plan_name"])
     c.drawString(230, y + 9, f"{invoice_data['start_date']} → {invoice_data['end_date']}")
     c.drawString(370, y + 9, invoice_data["payment_method"])
-    c.drawRightString(width - 45, y + 9, f"{invoice_data['currency']} {invoice_data['amount']}")
+    c.drawRightString(width - 45, y + 9, f"{invoice_data['currency']} {float(invoice_data['amount']):.2f}")
 
     # ================= SUMMARY =================
     y -= 50
@@ -136,13 +89,36 @@ def generate_invoice_pdf(invoice_data):
         c.setFillColor(PRIMARY)
         c.drawRightString(right_x, y_pos, value)
 
-    draw_summary("Subtotal", f"{invoice_data['currency']} {invoice_data['amount']}", y)
+    amount = float(invoice_data["amount"])
+    discount = float(invoice_data.get("discount_amount") or 0)
+    final_amount = float(invoice_data.get("final_amount") or (amount - discount))
+
+    # Subtotal
+    draw_summary("Subtotal", f"{invoice_data['currency']} {amount:.2f}", y)
     y -= 18
-    draw_summary("Discount", f"{invoice_data['currency']} {invoice_data.get('discount_amount', '0.00')}", y)
-    y -= 18
+
+    # Discount (only if > 0)
+    if discount > 0:
+        draw_summary("Discount", f"- {invoice_data['currency']} {discount:.2f}", y)
+        y -= 18
+
+        # Coupon code label
+        if invoice_data.get("coupon_code"):
+            c.setFont("Helvetica", 9)
+            c.setFillColor(SECONDARY)
+            c.drawRightString(
+                right_x,
+                y,
+                f"Coupon Applied: {invoice_data['coupon_code']}"
+            )
+            y -= 14
+
+    # Tax
     draw_summary("Tax (0%)", f"{invoice_data['currency']} 0.00", y)
     y -= 25
-    draw_summary("Total Paid", f"{invoice_data['currency']} {invoice_data['final_amount']}", y, bold=True)
+
+    # Total Paid
+    draw_summary("Total Paid", f"{invoice_data['currency']} {final_amount:.2f}", y, bold=True)
 
     # ================= PAID BADGE =================
     c.setFillColor(ACCENT)

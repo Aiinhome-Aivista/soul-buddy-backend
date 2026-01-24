@@ -481,6 +481,8 @@ def create_invoice_after_payment(transaction_id):
     invoice_data = {
     "invoice_number": invoice_number,
     "date": datetime.now().strftime("%d %b %Y"),
+    "full_name": full_name,                     # 🔥 REQUIRED
+    "coupon_code": row.get("coupon_code"), 
     "plan_name": plan_name,
     "amount": float(amount),
     "final_amount": float(amount),

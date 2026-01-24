@@ -401,7 +401,7 @@ def delete_seo_detail_route(seo_id):
     return delete_seo_entry(seo_id)
 
 
-@app.route("/static/invoices/<filename>")
+@app.route("/invoices/<filename>")
 def serve_invoice(filename):
     return send_from_directory("invoices", filename)
 

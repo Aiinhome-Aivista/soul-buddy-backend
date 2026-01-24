@@ -75,7 +75,7 @@ def send_otp_email(to_email, otp):
           <div class="container">
             
             <div class="header">
-              <h1>SOUL JUNCTION</h1>
+              <h1>SOULJUNCTION</h1>
             </div>
 
             <div class="content">
