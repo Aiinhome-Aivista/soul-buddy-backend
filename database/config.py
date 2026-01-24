@@ -112,10 +112,10 @@ SUPPORT_PASSWORD = "Soul@2025" # The password you use to log in to webmail
 
 RECEIVER_EMAIL = 'support@souljunction.life' 
 ADMIN_EMAIL = [
-    "saikatofficial1998@gmail.com"
-    # "syed.arshad@aiinhome.com",
-    # "feroz.omar@aiinhome.com",
-    # "sayan.mitra@aiinhome.com"
+    "saikatofficial1998@gmail.com",
+    "syed.arshad@aiinhome.com",
+    "feroz.omar@aiinhome.com",
+    "sayan.mitra@aiinhome.com"
 ]
 # Account 2: No-Reply
 NOREPLY_EMAIL = "noreply@souljunction.life"
