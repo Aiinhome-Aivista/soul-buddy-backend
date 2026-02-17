@@ -312,52 +312,69 @@ def update_subcategory_controller(cat_id):
     """Update a specific subcategory name"""
     data = request.get_json()
     author_name = data.get("author_name")
-    
+
     is_allowed, msg = check_admin_access(author_name)
     if not is_allowed:
         return jsonify({"status": "failed", "message": msg}), 403
-    
+
     old_name = data.get("old_name")
     new_name = data.get("new_name")
-    
+
     if not old_name or not new_name:
         return jsonify({"status": "failed", "message": "Both old_name and new_name are required"}), 400
-    
+
+    # Normalize input
+    old_clean = old_name.strip().lower()
+    new_clean = new_name.strip()
+
     conn = get_connection()
     cursor = conn.cursor(pymysql.cursors.DictCursor)
-    
+
     cursor.execute("SELECT subcategories FROM categories WHERE id = %s", (cat_id,))
     result = cursor.fetchone()
-    
+
     if not result:
         conn.close()
         return jsonify({"status": "failed", "message": "Category not found"}), 404
-    
-    current_subcats = []
-    if result['subcategories']:
-        try:
-            current_subcats = json.loads(result['subcategories'])
-        except:
-            current_subcats = []
-    
-    # Find and update
-    if old_name not in current_subcats:
+
+    try:
+        current_subcats = json.loads(result['subcategories']) if result['subcategories'] else []
+    except json.JSONDecodeError:
+        conn.close()
+        return jsonify({"status": "failed", "message": "Invalid subcategory data format"}), 500
+
+    if not isinstance(current_subcats, list):
+        conn.close()
+        return jsonify({"status": "failed", "message": "Subcategories format invalid"}), 500
+
+    # Normalize DB values for comparison
+    normalized_subcats = [x.strip().lower() for x in current_subcats]
+
+    # Check if old exists
+    if old_clean not in normalized_subcats:
         conn.close()
         return jsonify({"status": "failed", "message": "Subcategory not found"}), 404
-    
-    # Replace old name with new name
-    current_subcats = [new_name if x == old_name else x for x in current_subcats]
-    
+
+    # Prevent duplicate new name
+    if new_clean.lower() in normalized_subcats and new_clean.lower() != old_clean:
+        conn.close()
+        return jsonify({"status": "failed", "message": "Subcategory already exists"}), 400
+
+    # Update value
+    index = normalized_subcats.index(old_clean)
+    current_subcats[index] = new_clean.strip()
+
     cursor.execute(
         "UPDATE categories SET subcategories = %s WHERE id = %s",
         (json.dumps(current_subcats), cat_id)
     )
+
     conn.commit()
     conn.close()
-    
+
     return jsonify({
         "status": "success",
-        "message": "Subcategory updated",
+        "message": "Subcategory updated successfully",
         "subcategories": current_subcats
     }), 200
 
@@ -519,43 +536,83 @@ def update_blog_controller(blog_id):
     if not is_allowed:
         return jsonify({"status": "failed", "message": msg}), 403
 
-    title = request.form.get("title")
+    title           = request.form.get("title")
     content_preview = request.form.get("content_preview")
-    category_id = request.form.get("category_id")
-    is_pinned = request.form.get("is_pinned", 0)
-    is_post = request.form.get("is_post", 0)
-    
-    content_images = []
-    files = request.files.getlist('content_images')
-    
-    for f in files:
-        if f and f.filename != '':
+    category_id     = request.form.get("category_id")
+    subcategory     = request.form.get("subcategory", "")   # FIX: subcategory add
+    is_pinned       = request.form.get("is_pinned", 0)
+    is_post         = request.form.get("is_post", 0)
+
+    # FIX: tags add
+    tags_input = request.form.get("tags", "")
+    tags = clean_tags_input(tags_input)
+
+    # FIX: Main image handle
+    image_file    = request.files.get("image")
+    image_db_path = None
+    if image_file and image_file.filename:
+        filename      = secure_filename(image_file.filename)
+        file_path     = os.path.join(UPLOAD_FOLDER, filename)
+        image_file.save(file_path)
+        image_db_path = f"{UPLOAD_FOLDER}/{filename}"
+
+    content_images      = []
+    content_image_files = request.files.getlist("content_images")
+
+    for f in content_image_files:
+        if f and f.filename:
             filename = secure_filename(f.filename)
             f.save(os.path.join(CONTENT_IMAGES_FOLDER, filename))
             content_images.append(f"{CONTENT_IMAGES_FOLDER}/{filename}")
-    
+
     if not content_images:
         images_text = request.form.get("content_images")
         if images_text:
             try:
-                content_images = json.loads(images_text) 
-            except:
+                content_images = json.loads(images_text)  
+            except Exception:
                 content_images = [images_text]
 
     try:
-        conn = get_connection()
+        conn   = get_connection()
         cursor = conn.cursor()
-        query = """
-            UPDATE blogs 
-            SET title=%s, content_preview=%s, category_id=%s, content_images=%s, is_pinned=%s, is_post=%s
-            WHERE id=%s
-        """
-        cursor.execute(query, (title, content_preview, category_id, json.dumps(content_images), is_pinned, is_post, blog_id))
+
+        if image_db_path:
+            query = """
+                UPDATE blogs
+                SET title=%s, content_preview=%s, category_id=%s, subcategory=%s,
+                    image_url=%s, content_images=%s,
+                    is_pinned=%s, is_post=%s, tags=%s
+                WHERE id=%s
+            """
+            params = (
+                title, content_preview, category_id, subcategory,
+                image_db_path, json.dumps(content_images),
+                is_pinned, is_post, tags,
+                blog_id
+            )
+        else:
+            query = """
+                UPDATE blogs
+                SET title=%s, content_preview=%s, category_id=%s, subcategory=%s,
+                    content_images=%s,
+                    is_pinned=%s, is_post=%s, tags=%s
+                WHERE id=%s
+            """
+            params = (
+                title, content_preview, category_id, subcategory,
+                json.dumps(content_images),
+                is_pinned, is_post, tags,
+                blog_id
+            )
+
+        cursor.execute(query, params)
         conn.commit()
         conn.close()
-        
+
         return jsonify({"status": "success", "message": "Blog updated successfully"}), 200
-    except pymysql.err.IntegrityError as e:
+
+    except pymysql.err.IntegrityError:
         return jsonify({"status": "failed", "message": "Invalid Category ID. Please check if the category exists."}), 400
     except Exception as e:
         return jsonify({"status": "failed", "message": str(e)}), 500
