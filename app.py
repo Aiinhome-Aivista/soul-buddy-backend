@@ -60,6 +60,28 @@ from controllers.otp_validate import send_otp_controller, verify_otp_controller
 from controllers.captcha_controller import generate_captcha_controller
 from controllers.seo_api import create_seo_entry, get_seo_data, update_seo_entry, delete_seo_entry
 from controllers.subscription_history import get_transaction_history
+from controllers.blog_controller import (
+    get_all_categories_controller,
+    create_category_controller,
+    update_category_controller,
+    delete_category_controller,
+    get_all_blogs_controller,
+    create_blog_controller,
+    update_blog_controller,
+    delete_blog_controller,
+    get_published_blogs_controller,
+    get_all_tags_controller,
+    get_filtered_blogs_controller,
+    add_subcategory_controller , 
+    get_subcategories_by_category_name,
+    update_subcategory_controller,
+    delete_subcategory_controller,
+    get_all_subcategories_list_controller,
+    upload_content_image_controller,
+    get_content_images_controller,
+    update_content_image_controller,
+    delete_content_image_controller
+)
 from flask import send_from_directory
 
 
@@ -412,6 +434,113 @@ def logo():
 @app.route("/transactions/<user_id>", methods=["GET"])
 def transactions(user_id):
     return get_transaction_history(user_id)
+
+# ==========================
+#    CATEGORY API ROUTES
+# ==========================
+
+# 1. Get All Categories
+@app.route('/categories', methods=['GET'])
+def get_categories_route():
+    return get_all_categories_controller()
+
+# 2. Create Category
+@app.route('/categories', methods=['POST'])
+def create_category_route():
+    return create_category_controller()
+
+# 3. Update Category
+@app.route('/categories/<int:cat_id>', methods=['PUT'])
+def update_category_route(cat_id):
+    return update_category_controller(cat_id)
+
+# 4. Delete Category
+@app.route('/categories/<int:cat_id>', methods=['DELETE'])
+def delete_category_route(cat_id):
+    return delete_category_controller(cat_id)
+
+
+# ==========================
+#      BLOG API ROUTES
+# ==========================
+
+# 1. Get All Blogs
+@app.route('/blogs', methods=['GET'])
+def get_blogs_route():
+    return get_all_blogs_controller()
+
+# 2. Create Blog
+@app.route('/blogs', methods=['POST'])
+def create_blog_route():
+    return create_blog_controller()
+
+# 3. Update Blog
+@app.route('/blogs/<int:blog_id>', methods=['PUT'])
+def update_blog_route(blog_id):
+    return update_blog_controller(blog_id)
+
+# 4. Delete Blog
+@app.route('/blogs/<int:blog_id>', methods=['DELETE'])
+def delete_blog_route(blog_id):
+    return delete_blog_controller(blog_id)
+
+@app.route('/blogs/published', methods=['GET'])
+def get_published_blogs_route():
+    return get_published_blogs_controller()
+
+@app.route('/blogs/tags', methods=['GET'])
+def get_tags_route():
+    return get_all_tags_controller()
+
+@app.route('/blogs/filter', methods=['POST'])
+def get_blogs_filter_route():
+    return get_filtered_blogs_controller()
+
+# ==========================
+#    SUBCATEGORY ROUTES
+# ==========================
+
+# 1. Add Subcategory to a Category
+@app.route('/categories/<int:cat_id>/subcategories', methods=['POST'])
+def add_subcategory_route(cat_id):
+    return add_subcategory_controller(cat_id)
+
+@app.route('/categories/subcategories/all', methods=['POST'])
+def get_subcategories_list_route():
+    return get_subcategories_by_category_name()
+
+# 2. Update a Subcategory Name
+@app.route('/categories/<int:cat_id>/subcategories', methods=['PUT'])
+def update_subcategory_route(cat_id):
+    return update_subcategory_controller(cat_id)
+
+# 3. Delete a Subcategory
+@app.route('/categories/<int:cat_id>/subcategories', methods=['DELETE'])
+def delete_subcategory_route(cat_id):
+    return delete_subcategory_controller(cat_id)
+
+@app.route('/categories/subcategories/list-all', methods=['GET'])
+def get_all_subcategories_route():
+    return get_all_subcategories_list_controller()
+
+# ==========================================
+#      CONTENT IMAGES LIBRARY ROUTES
+# ==========================================
+
+# 1. Upload image to library
+@app.route('/content-images', methods=['POST'])
+def upload_content_image_route():
+    return upload_content_image_controller()
+
+# 2. Get all images from library
+@app.route('/content-images', methods=['GET'])
+def get_content_images_route():
+    return get_content_images_controller()
+
+# 3. Delete image from library
+@app.route('/content-images/<int:image_id>', methods=['DELETE'])
+def delete_content_image_route(image_id):
+    return delete_content_image_controller(image_id)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)
