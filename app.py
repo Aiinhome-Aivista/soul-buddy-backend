@@ -429,7 +429,7 @@ def serve_invoice(filename):
 
 @app.route("/logo")
 def logo():
-    return send_from_directory("logo", "sblogo3.png")
+    return send_from_directory("logo", "newlogo.png")
 
 @app.route("/transactions/<user_id>", methods=["GET"])
 def transactions(user_id):
@@ -541,6 +541,18 @@ def get_content_images_route():
 @app.route('/content-images/<int:image_id>', methods=['DELETE'])
 def delete_content_image_route(image_id):
     return delete_content_image_controller(image_id)
+
+# @app.route('/staff/photo', methods=['POST'])
+# def upsert_staff_photo():
+#     return upsert_staff_photo_controller()
+
+# @app.route('/staff/photo/<author_name>', methods=['GET'])
+# def get_staff_photo(author_name):
+#     return get_staff_photo_controller(author_name)
+
+# @app.route('/staff/photo/<author_name>', methods=['DELETE'])
+# def delete_staff_photo(author_name):
+#     return delete_staff_photo_controller(author_name)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3004, debug=True)

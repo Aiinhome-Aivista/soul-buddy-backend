@@ -429,7 +429,7 @@ def delete_subcategory_controller(cat_id):
         "subcategories": current_subcats
     }), 200
 
-# ================= BLOG CONTROLLERS (WITH SUBCATEGORY FIELD ADDED) =================
+# ================= BLOG CONTROLLERS (WITH SEO FIELDS) =================
 
 def get_all_blogs_controller():
     try:
@@ -471,12 +471,19 @@ def create_blog_controller():
     title = request.form.get("title")
     content_preview = request.form.get("content_preview")
     category_id = request.form.get("category_id")
-    subcategory = request.form.get("subcategory", "")  # NEW: Subcategory field (optional)
+    subcategory = request.form.get("subcategory", "")
     is_pinned = request.form.get("is_pinned", 0)
     is_post = request.form.get("is_post", 0)
     
     tags_input = request.form.get("tags", "")
     tags = clean_tags_input(tags_input)
+
+    # SEO fields (NEW)
+    meta_title = request.form.get("meta_title", "")
+    meta_description = request.form.get("meta_description", "")
+    meta_keywords = request.form.get("meta_keywords", "")
+    canonical_url = request.form.get("canonical_url", "")
+    index_status = request.form.get("index_status", "index")
 
     # Main image
     image_file = request.files.get('image')
@@ -513,10 +520,12 @@ def create_blog_controller():
         conn = get_connection()
         cursor = conn.cursor()
         query = """
-            INSERT INTO blogs (title, author_name, content_preview, category_id, subcategory, image_url, content_images, is_pinned, is_post, tags)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO blogs (title, author_name, content_preview, category_id, subcategory, image_url, content_images, 
+                               is_pinned, is_post, tags, meta_title, meta_description, meta_keywords, canonical_url, index_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (title, author_name, content_preview, category_id, subcategory, image_db_path, content_images_json, is_pinned, is_post, tags))
+        cursor.execute(query, (title, author_name, content_preview, category_id, subcategory, image_db_path, content_images_json, 
+                               is_pinned, is_post, tags, meta_title, meta_description, meta_keywords, canonical_url, index_status))
         blog_id = cursor.lastrowid
         conn.commit()
         conn.close()
@@ -539,15 +548,21 @@ def update_blog_controller(blog_id):
     title           = request.form.get("title")
     content_preview = request.form.get("content_preview")
     category_id     = request.form.get("category_id")
-    subcategory     = request.form.get("subcategory", "")   # FIX: subcategory add
+    subcategory     = request.form.get("subcategory", "")
     is_pinned       = request.form.get("is_pinned", 0)
     is_post         = request.form.get("is_post", 0)
 
-    # FIX: tags add
     tags_input = request.form.get("tags", "")
     tags = clean_tags_input(tags_input)
 
-    # FIX: Main image handle
+    # SEO fields (NEW)
+    meta_title = request.form.get("meta_title", "")
+    meta_description = request.form.get("meta_description", "")
+    meta_keywords = request.form.get("meta_keywords", "")
+    canonical_url = request.form.get("canonical_url", "")
+    index_status = request.form.get("index_status", "index")
+
+    # Main image
     image_file    = request.files.get("image")
     image_db_path = None
     if image_file and image_file.filename:
@@ -556,6 +571,7 @@ def update_blog_controller(blog_id):
         image_file.save(file_path)
         image_db_path = f"{UPLOAD_FOLDER}/{filename}"
 
+    # Content images
     content_images      = []
     content_image_files = request.files.getlist("content_images")
 
@@ -569,7 +585,7 @@ def update_blog_controller(blog_id):
         images_text = request.form.get("content_images")
         if images_text:
             try:
-                content_images = json.loads(images_text)  
+                content_images = json.loads(images_text)
             except Exception:
                 content_images = [images_text]
 
@@ -581,28 +597,28 @@ def update_blog_controller(blog_id):
             query = """
                 UPDATE blogs
                 SET title=%s, content_preview=%s, category_id=%s, subcategory=%s,
-                    image_url=%s, content_images=%s,
-                    is_pinned=%s, is_post=%s, tags=%s
+                    image_url=%s, content_images=%s, is_pinned=%s, is_post=%s, tags=%s,
+                    meta_title=%s, meta_description=%s, meta_keywords=%s, canonical_url=%s, index_status=%s
                 WHERE id=%s
             """
             params = (
                 title, content_preview, category_id, subcategory,
-                image_db_path, json.dumps(content_images),
-                is_pinned, is_post, tags,
+                image_db_path, json.dumps(content_images), is_pinned, is_post, tags,
+                meta_title, meta_description, meta_keywords, canonical_url, index_status,
                 blog_id
             )
         else:
             query = """
                 UPDATE blogs
                 SET title=%s, content_preview=%s, category_id=%s, subcategory=%s,
-                    content_images=%s,
-                    is_pinned=%s, is_post=%s, tags=%s
+                    content_images=%s, is_pinned=%s, is_post=%s, tags=%s,
+                    meta_title=%s, meta_description=%s, meta_keywords=%s, canonical_url=%s, index_status=%s
                 WHERE id=%s
             """
             params = (
                 title, content_preview, category_id, subcategory,
-                json.dumps(content_images),
-                is_pinned, is_post, tags,
+                json.dumps(content_images), is_pinned, is_post, tags,
+                meta_title, meta_description, meta_keywords, canonical_url, index_status,
                 blog_id
             )
 
@@ -863,7 +879,7 @@ def get_all_subcategories_list_controller():
         logging.error(f"Error in get_all_subcategories: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ================= CONTENT IMAGES LIBRARY CONTROLLERS (NEW) =================
+# ================= CONTENT IMAGES LIBRARY CONTROLLERS =================
 
 def upload_content_image_controller():
     """
@@ -902,8 +918,7 @@ def upload_content_image_controller():
         image_id = cursor.lastrowid
         conn.close()
         
-        # Build full URL (change to your server URL)
-        # Example: http://122.163.121.176:3004/static/blog_images/content/image.jpg
+        # Build full URL
         full_url = f"{BASE_URL.rstrip('/')}/{image_relative_path}"
         
         return jsonify({
@@ -1012,7 +1027,7 @@ def update_content_image_controller(image_id):
         conn.close()
         
         # Convert to full URL
-        full_url = f"{BASE_URL.rstrip('/')}/{image_relative_path.lstrip('/')}"
+        full_url = f"{BASE_URL.rstrip('/')}/{updated['image_url']}"
         updated['image_url'] = full_url
         
         return jsonify({
@@ -1070,5 +1085,4 @@ def delete_content_image_controller(image_id):
     except Exception as e:
         logging.error(f"Error deleting image: {str(e)}")
         return jsonify({"status": "failed", "message": str(e)}), 500
-
         
